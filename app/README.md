@@ -3,7 +3,7 @@
 Secure local storage and encryption for credentials with a
 simplified, user-friendly interface.
 
-### DEBUG
+### Debug
 
 ## Authentication
 Authentication flow intends to leverage the macOS/iOS
