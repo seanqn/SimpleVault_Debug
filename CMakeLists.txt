@@ -39,6 +39,7 @@ qt_add_qml_module(SimpleVault
         models/vaultcontentmodel.h models/vaultcontentmodel.cpp
         controller/vaultmanager.h controller/vaultmanager.cpp
         RESOURCES archive/ARCHIVE.md
+        RESOURCES README.md
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
