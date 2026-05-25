@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(SimpleVault VERSION 0.1 LANGUAGES CXX)
+project(SimpleVault VERSION 1.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(Qt6_DIR "/Users/shonny/Qt/6.9.3/macos/lib/cmake/Qt6")
@@ -38,8 +38,6 @@ qt_add_qml_module(SimpleVault
         models/groupsmodel.h models/groupsmodel.cpp
         models/vaultcontentmodel.h models/vaultcontentmodel.cpp
         controller/vaultmanager.h controller/vaultmanager.cpp
-        RESOURCES archive/ARCHIVE.md
-        RESOURCES README.md
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
