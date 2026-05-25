@@ -21,3 +21,9 @@ The home view serves as the anchor for rest of the UI after successful authentic
 New features to be added will be built on the previously listed core features. Vault content will display clean and organized
 lines or boxes of text that make it easy to identify usernames, passwords, organization names, and other credentials. An account
 page is a necessary inclusion that will reflect the user's information and preferences.
+####
+####
+### Archive
+Custom cross-language bridges were made in earlier builds which intended to resolve application input to macOS keychain storage
+and retrieval. These bridges were near fully functional but a working implementation required subscription to Apple SDK. Current
+builds depend on qtkeychain to work around this.

@@ -15,7 +15,7 @@ int main(int argc, char *argv[])
 
     bool runInTest = true;
     // testCases: [0] default, [1] qml, [2] backend
-    int testCase = 0;
+    int testCase = 1;
 
     VaultManager *vaultManager = nullptr;
     if (runInTest) {
