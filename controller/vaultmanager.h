@@ -20,9 +20,10 @@ public:
     Q_INVOKABLE void addVaultRowEntry(int groupID, const QString &organizationName, const QString &username, const QString &password);
 
 signals:
-    void currentGroupIDChanged();
+    void currentGroupIDChanged(int groupID);
     void groupsModelChanged();
     void addGroupSelectAccepted(int groupID);
+    void groupNameChanged(const QString &groupName);
     void removeGroupSelectAccepted(int groupID);
     void vaultRowEntrySuccess();
 

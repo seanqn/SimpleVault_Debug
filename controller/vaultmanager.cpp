@@ -21,7 +21,7 @@ void VaultManager::setCurrentGroup(int currentGroupID) {
     m_vaultContentModel->setFilter(QString("group_id = %1").arg(currentGroupID));
     m_vaultContentModel->select();
 
-    emit currentGroupIDChanged();
+    emit currentGroupIDChanged(currentGroupID);
 }
 
 void VaultManager::addGroup(const QString &groupName) {
@@ -44,7 +44,7 @@ void VaultManager::removeGroup(int groupID) {
         m_vaultContentModel->setFilter("1=0");
         m_vaultContentModel->select();
         m_currentGroupID = -1;
-        emit currentGroupIDChanged();
+        emit currentGroupIDChanged(groupID);
     }
 
     emit removeGroupSelectAccepted(groupID);
@@ -55,6 +55,8 @@ void VaultManager::renameGroup(int groupID, const QString &newName) {
         return;
     }
     m_groupsModel->select();
+
+    emit groupNameChanged(newName);
 }
 
 void VaultManager::addVaultRowEntry(int groupID, const QString &organizationName, const QString &username, const QString &password) {
