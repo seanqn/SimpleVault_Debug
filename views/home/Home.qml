@@ -38,6 +38,8 @@ Item {
             SplitView.maximumWidth: 300
         }
 
+        // TODO: create a dedicated vault content view that will replace this rectangle
+
         Rectangle {
             id: vaultContent
             SplitView.fillWidth: true

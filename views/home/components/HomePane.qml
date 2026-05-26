@@ -9,7 +9,7 @@ Item {
     // parent: SplitView
 
     // requires layout adjustments
-    // TODO: TreeView will likely be the best component
+    // VC NOTE: this component is being tested outside of version control and will be refactored afterwards
 
     Pane {
         anchors.fill: parent
@@ -69,6 +69,7 @@ Item {
                 modal: false
 
                 // allows pane components to call DB_LocalStorage methods and enable persistent data (groups, group removals)
+                // NOTE: since VaultManager manages group methods, consider calling addGroup through VaultManager instead
                 function addGroup() {
                     let groupName = "";
                     groupName = addGroupDialogInput.text.trim();
@@ -77,7 +78,7 @@ Item {
                         groupsDataModel.append({"name": groupName});
 
                         // groupID stores the returned id key from SQL while addGroup() executes query
-                        let groupID = VaultDB.addGroup(groupName);
+                        let groupID = vaultManager.addGroup(groupName);
                         if (groupID === -1) {
                             console.log("An error occured while attempting to add group to database");
                             return;
