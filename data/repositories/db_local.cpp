@@ -3,11 +3,6 @@
 #include <QStandardPaths>
 #include <QDir>
 
-// TODO: database entries require encryption
-
-// FIX: unable to add groups to groups table
-// ERROR: (logical in HomePane.qml), this::addGroup returns -1 suggesting no query exec
-
 // in production, the default connection name is databaseName param
 DB_LocalStorage::DB_LocalStorage(QObject *parent, const QString &databaseName)
     : QObject(parent),
@@ -162,7 +157,7 @@ bool DB_LocalStorage::removeGroup(int groupID) {
 
 // requires additional columns for content types: organization, username, password
 // requires long form of string (QString or QTextStream input?) parameter
-bool DB_LocalStorage::addVaultContent(int currGroupID, const QString &organizationName, const QString &username, const QString &pass) {
+bool DB_LocalStorage::addVaultRowEntry(int currGroupID, const QString &organizationName, const QString &username, const QString &pass) {
     QSqlQuery _query(_db);
     _query.prepare("INSERT INTO vault_content (group_id, org_name, username, password) VALUES (:gid, :org, :usr, :pw)");
     _query.bindValue(":gid", currGroupID);

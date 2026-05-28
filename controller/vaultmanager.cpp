@@ -1,4 +1,6 @@
 #include "vaultmanager.h"
+#include "data/repositories/db_local.h"
+#include "data/repository.h"
 
 VaultManager::VaultManager(QObject* parent, const QString &connectionName)
     : QObject(parent)
@@ -18,8 +20,7 @@ VaultManager::VaultManager(QObject* parent, const QString &connectionName)
 
 void VaultManager::setCurrentGroup(int currentGroupID) {
     m_currentGroupID = currentGroupID;
-    m_vaultContentModel->setFilter(QString("group_id = %1").arg(currentGroupID));
-    m_vaultContentModel->select();
+    m_repository->fetchCredentials(currentGroupID);
 
     emit currentGroupIDChanged(currentGroupID);
 }
@@ -29,11 +30,13 @@ void VaultManager::addGroup(const QString &groupName) {
     if (_id == -1) {
         return;
     }
-    m_groupsModel->select();
+    // m_repository->addGroup(groupName);
 
     emit addGroupSelectAccepted(_id);
 }
 
+// this method implies that a group can be removed without having active focus on it in the pane
+// i.e. removing via context menu right-click or bulk selection
 void VaultManager::removeGroup(int groupID) {
     if (!m_db->removeGroup(groupID)) {
         return;
@@ -56,7 +59,7 @@ void VaultManager::renameGroup(int groupID, const QString &newName) {
     }
     m_groupsModel->select();
 
-    emit groupNameChanged(newName);
+    emit groupNameChanged(m_db->fetchGroupName(groupID));
 }
 
 void VaultManager::addVaultRowEntry(int groupID, const QString &organizationName, const QString &username, const QString &password) {

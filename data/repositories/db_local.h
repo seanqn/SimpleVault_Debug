@@ -19,7 +19,7 @@ public:
     Q_INVOKABLE bool renameGroup(int groupID, const QString &newGroupName);
     Q_INVOKABLE bool removeGroup(int groupID);
 
-    Q_INVOKABLE bool addVaultContent(int currGroupID, const QString &organizationName, const QString &username, const QString &pass);
+    Q_INVOKABLE bool addVaultRowEntry(int currGroupID, const QString &organizationName, const QString &username, const QString &pass);
     // Q_INVOKABLE void removeVaultContent();
     bool isDBConnected();
 

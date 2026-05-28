@@ -1,12 +1,17 @@
 #ifndef VAULTMANAGER_H
 #define VAULTMANAGER_H
-#include "data/repositories/db_local.h"
-#include "models/groupsmodel.h"
-#include "models/vaultcontentmodel.h"
+// #include "data/repositories/db_local.h"
+// #include "models/groupsmodel.h"
+// #include "models/vaultcontentmodel.h"
+// #include "data/repository.h"
+class DB_LocalStorage;
+class Repository;
+
+// repository now services both group and vault content models
 
 class VaultManager : public QObject {
     Q_OBJECT
-    Q_PROPERTY(GroupsModel* groupsModel READ groupsModel NOTIFY groupsModelChanged)
+    // this qml property may be redundant after repository implementation is complete
     Q_PROPERTY(int currentGroupID READ currentGroupID NOTIFY currentGroupIDChanged)
 
 public:
@@ -17,7 +22,9 @@ public:
     Q_INVOKABLE void addGroup(const QString &groupName);
     Q_INVOKABLE void removeGroup(int groupID);
     Q_INVOKABLE void renameGroup(int groupID, const QString &newName);
-    Q_INVOKABLE void addVaultRowEntry(int groupID, const QString &organizationName, const QString &username, const QString &password);
+    // Q_INVOKABLE void addVaultRowEntry(int groupID, const QString &organizationName, const QString &username, const QString &password);
+
+    Q_INVOKABLE void addRowEntry(const Credential &credential);
 
 signals:
     void currentGroupIDChanged(int groupID);
@@ -29,8 +36,9 @@ signals:
 
 private:
     DB_LocalStorage* m_db;
-    GroupsModel* m_groupsModel;
-    VaultContentModel* m_vaultContentModel;
+    Repository* m_repository;
+    // GroupsModel* m_groupsModel;
+    // VaultContentModel* m_vaultContentModel;
     int m_currentGroupID;
 };
 

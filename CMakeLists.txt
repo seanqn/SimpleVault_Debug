@@ -20,6 +20,7 @@ add_executable(SimpleVault
 
 # QML_IMPORT_PATH("/Users/shonny/Qt/6.9.3/macos/qml")
 
+# after debug is finished, review and keep only necessary sources
 qt_add_qml_module(SimpleVault
     URI SimpleVault
     VERSION 1.0
@@ -35,9 +36,14 @@ qt_add_qml_module(SimpleVault
         data/repositories/db_local.h data/repositories/db_local.cpp
         # data/tests/db_local_tests.h data/tests/db_local_tests.cpp
         services/vaultsecurityservicer.h services/vaultsecurityservicer.cpp
-        models/groupsmodel.h models/groupsmodel.cpp
-        models/vaultcontentmodel.h models/vaultcontentmodel.cpp
+        # models/groupsmodel.h models/groupsmodel.cpp
+        # models/vaultcontentmodel.h models/vaultcontentmodel.cpp
+        # models/repositorymodel.h
         controller/vaultmanager.h controller/vaultmanager.cpp
+        data/credentialtypes.h
+        data/repository.h data/repository.cpp
+        models/groupslistmodel.h
+        models/credentialslistmodel.h
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
