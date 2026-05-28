@@ -4,42 +4,21 @@
 // #include "models/groupsmodel.h"
 // #include "models/vaultcontentmodel.h"
 // #include "data/repository.h"
-class DB_LocalStorage;
+class CredentialsModel;
 class Repository;
-
-// repository now services both group and vault content models
 
 class VaultManager : public QObject {
     Q_OBJECT
-    // this qml property may be redundant after repository implementation is complete
-    Q_PROPERTY(int currentGroupID READ currentGroupID NOTIFY currentGroupIDChanged)
+    Q_PROPERTY(CredentialsModel* model READ model CONSTANT)
 
 public:
-    explicit VaultManager(QObject *parent = nullptr, const QString &connectionName="SimpleVault");
-    Q_INVOKABLE GroupsModel* groupsModel() const { return m_groupsModel; }
-    Q_INVOKABLE int currentGroupID() const { return m_currentGroupID; }
-    Q_INVOKABLE void setCurrentGroup(int currentGroupID);
-    Q_INVOKABLE void addGroup(const QString &groupName);
-    Q_INVOKABLE void removeGroup(int groupID);
-    Q_INVOKABLE void renameGroup(int groupID, const QString &newName);
-    // Q_INVOKABLE void addVaultRowEntry(int groupID, const QString &organizationName, const QString &username, const QString &password);
-
-    Q_INVOKABLE void addRowEntry(const Credential &credential);
-
-signals:
-    void currentGroupIDChanged(int groupID);
-    void groupsModelChanged();
-    void addGroupSelectAccepted(int groupID);
-    void groupNameChanged(const QString &groupName);
-    void removeGroupSelectAccepted(int groupID);
-    void vaultRowEntrySuccess();
+    explicit VaultManager(QObject* parent = nullptr);
+    CredentialsModel* model() const { return m_model; }
+    Q_INVOKABLE void selectGroup(int groupID);
 
 private:
-    DB_LocalStorage* m_db;
+    CredentialsModel* m_model;
     Repository* m_repository;
-    // GroupsModel* m_groupsModel;
-    // VaultContentModel* m_vaultContentModel;
-    int m_currentGroupID;
 };
 
 #endif // VAULTMANAGER_H

@@ -27,3 +27,14 @@ page is a necessary inclusion that will reflect the user's information and prefe
 Custom cross-language bridges were made in earlier builds which intended to resolve application input to macOS keychain storage
 and retrieval. These bridges were near fully functional but a working implementation required subscription to Apple SDK. Current
 builds depend on qtkeychain to work around this.
+
+### Architecture Changes
+Refactoring towards an improved MVVM structure with a more focused
+controller (VaultManager) and a repository for dedicated database
+communication.
+
+Added repository in /data (will handle calls to database)
+
+Started refactor of VaultManager
+
+Started prototype of a single core model CredentialsModel

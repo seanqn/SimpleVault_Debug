@@ -3,6 +3,8 @@
 #include <QStandardPaths>
 #include <QDir>
 
+// groups and vault content tables could be consolidated, only content model is needed
+
 // in production, the default connection name is databaseName param
 DB_LocalStorage::DB_LocalStorage(QObject *parent, const QString &databaseName)
     : QObject(parent),
