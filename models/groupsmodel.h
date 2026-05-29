@@ -1,10 +1,10 @@
 #ifndef GROUPSMODEL_H
 #define GROUPSMODEL_H
-#include <QSqlListModel>
+#include <QAbstractListModel>
 
 // GroupsModel will overwrite current QML implementation in HomePane.qml
 
-class GroupsModel : public QSqlTableModel {
+class GroupsModel : public QAbstractListModel {
     Q_OBJECT
 
 public:
@@ -13,7 +13,7 @@ public:
         GroupNameRole,
         CreatedAtRole
     };
-    explicit GroupsModel(QObject* parent = nullptr, const QString &connectionName="SimpleVault");
+    explicit GroupsModel(QObject* parent = nullptr);
     QHash<int, QByteArray> roleNames() const override;
     QVariant data(const QModelIndex &index, int role=Qt::DisplayRole)const override;
 };
