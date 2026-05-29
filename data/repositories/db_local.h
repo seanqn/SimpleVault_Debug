@@ -4,6 +4,8 @@
 #include <QSqlError>
 #include <QSqlQuery>
 
+// QML invokable macro will likely be redundant after repository is complete
+
 class DB_LocalStorage : public QObject {
     Q_OBJECT
     Q_PROPERTY(bool isDBConnected READ isDBConnected NOTIFY isDBConnectedChanged)
@@ -41,15 +43,5 @@ private:
     QString m_databaseName;
 
 };
-
-// class DB_LocalStorageServicer {
-// public:
-//     DB_LocalStorageServicer();
-//     void fetchEntries();
-//     void addEntry(string content);
-
-// private:
-//     DB_LocalStorageServicer db;
-//     // crypto encryptedContent
 
 #endif // DB_LOCAL_H

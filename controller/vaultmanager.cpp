@@ -1,11 +1,12 @@
 #include "vaultmanager.h"
-#include "models/credentialsmodel.h"
+#include "models/groupsmodel.h"
+#include "models/credentialmodel.h"
 #include "data/repository.h"
 
-// TODO: CredentialsModel is not complete
+// TODO: CredentialModel and Repository incomplete
 
 VaultManager::VaultManager(QObject *parent) {
-    m_model = new CredentialsModel(this);
+    m_model = new CredentialModel(this);
     m_repository = new Repository(this);
 }
 

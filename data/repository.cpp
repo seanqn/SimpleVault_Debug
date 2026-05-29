@@ -1,5 +1,6 @@
 #include "repository.h"
 #include "repositories/db_local.h"
+#include "credentialtypes.h"
 
 Repository::Repository(DB_LocalStorage *_db, QObject *parent) {
     m_db = _db;

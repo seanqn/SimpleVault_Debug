@@ -1,14 +1,6 @@
 #include "groupsmodel.h"
 
-GroupsModel::GroupsModel(QObject* parent, const QString &connectionName)
-    : QSqlTableModel(parent, QSqlDatabase::database(connectionName))
-{
-    setTable("groups");
-    setEditStrategy(QSqlTableModel::OnRowChange);
-
-    setHeaderData(1, Qt::Horizontal, tr("name"));
-    select();
-}
+GroupsModel::GroupsModel(QObject* parent) {}
 
 QHash<int, QByteArray> GroupsModel::roleNames() const {
     QHash<int, QByteArray> roles;
@@ -18,21 +10,18 @@ QHash<int, QByteArray> GroupsModel::roleNames() const {
     return roles;
 }
 
-QVariant GroupsModel::data(const QModelIndex &index, int role) const {
-    if (role < Qt::UserRole)  {
-        return QSqlTableModel::data(index, role);
-    }
+QVariant GroupsModel::data(const QModelIndex &index, int role) const override {
+    if (!index.isValid() || index.row() < 0)  return QVariant();
 
-    int column;
-    if (role == IDRole) {
-        column = 0;
+    switch (role) {
+    case IDRole:
+        return 0;
+    case GroupNameRole:
+        return 1;
+    case CreatedAtRole:
+        return 2;
+    default:
+        return QVariant();
     }
-    else if (role == GroupNameRole) {
-        column = 1;
-    }
-    else {
-        column = 2;
-    }
-    return QSqlTableModel::data(this->index(index.row(), column));
 }
 

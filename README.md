@@ -37,4 +37,4 @@ Added repository in /data (will handle calls to database)
 
 Started refactor of VaultManager
 
-Started prototype of a single core model CredentialsModel
+CredentialModel to replace VaultContentModel

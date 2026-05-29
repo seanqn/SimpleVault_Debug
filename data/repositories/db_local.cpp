@@ -64,7 +64,7 @@ bool DB_LocalStorage::initDB() {
 
     // create tables and enable foreign_keys
     QSqlQuery _query(_db);
-    _query.exec("PRAGMA foreign_keys = ON;");
+    // _query.exec("PRAGMA foreign_keys = ON;");
     // groups table
     // slug to be added, removed now for base testing
     _query.exec("CREATE TABLE IF NOT EXISTS groups ( "
@@ -73,7 +73,7 @@ bool DB_LocalStorage::initDB() {
                    "created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
     // vault_content table
     _query.exec("CREATE TABLE IF NOT EXISTS vault_content ( "
-                   "group_id INTEGER NOT NULL, "
+                   "group_id INTEGER PRIMARY KEY AUTOINCREMENT, "
                    "content_id INTEGER PRIMARY KEY AUTOINCREMENT, "
                    "org_name TEXT, "
                    "username TEXT, "
@@ -118,6 +118,7 @@ int DB_LocalStorage::addGroup(const QString &groupName) {
 }
 
 // returns the group name that matches the given group id
+// primarily for debugging
 QString DB_LocalStorage::fetchGroupName(int groupID) {
     QSqlQuery _query(_db);
     _query.prepare("SELECT name FROM groups WHERE id = :groupID");
@@ -144,6 +145,7 @@ bool DB_LocalStorage::renameGroup(int groupID, const QString &newGroupName) {
 }
 
 // _query that removes an entire group: called when a user deletes a group through qml interaction
+// foreign keyed group_id in vault_content should have associated rows removed
 bool DB_LocalStorage::removeGroup(int groupID) {
     QSqlQuery _query(_db);
     _query.prepare("DELETE FROM groups WHERE id = :groupID");
@@ -173,5 +175,21 @@ bool DB_LocalStorage::addVaultRowEntry(int currGroupID, const QString &organizat
 
     emit databaseQuerySuccess();
     return true;
+}
+
+// retrieves all credentials from a group
+QList DB_LocalStorage::fetchCredentials(int currGroupID) {
+    QSqlQuery _query(_db);
+    _query.prepare("SELECT org_name, username, password FROM vault_content WHERE group_id = :currGroupID");
+    _query.bindValue(":currGroupID", currGroupID);
+
+    if (!query.exec()) {
+        emit databaseQueryError(_query.lastError);
+        return false;
+    }
+
+    emit databaseQuerysuccess();
+    return true;
+
 }
 

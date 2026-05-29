@@ -1,6 +1,6 @@
 #ifndef GROUPSMODEL_H
 #define GROUPSMODEL_H
-#include <QSqlTableModel>
+#include <QSqlListModel>
 
 // GroupsModel will overwrite current QML implementation in HomePane.qml
 

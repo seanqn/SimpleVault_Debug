@@ -5,8 +5,9 @@
 #include "credentialtypes.h"
 
 class DB_LocalStorage;
+struct Credential;
 
-// Repository class communicates between QML and the database, caching recent changes and handling encryption/decryption
+// Repository class communicates directly to the database, caching recent changes and handling encryption/decryption
 class Repository : public QObject {
     Q_OBJECT
 public:
