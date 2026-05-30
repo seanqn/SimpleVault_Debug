@@ -16,12 +16,13 @@ public:
     int count() const { return m_cache.size(); }
     Credential getAt(int index) const { return m_cache.at(index); }
 
-    void fetchCredentials(int groupID);
-    void addCredential(Credential credential);
-    void removeCredential(int id);
+    QList<Credential> fetchCredentials(int groupID);
+    void addCredential(Credential &credential);
+    void removeCredential(Credential &credential);
+    void removeCredentialRow(int contentID);
 
 signals:
-    void dataChanged();
+    void cacheFilled();
     void entryAdded(int index);
     void entryRemoved(int index);
 

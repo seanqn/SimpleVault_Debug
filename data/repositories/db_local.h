@@ -2,13 +2,16 @@
 #define DB_LOCAL_H
 #include <QSqlDatabase>
 #include <QSqlError>
-#include <QSqlQuery>
+
+struct Credential;
 
 // QML invokable macro will likely be redundant after repository is complete
 
+template <typename T, typename Mapping>
+
 class DB_LocalStorage : public QObject {
     Q_OBJECT
-    Q_PROPERTY(bool isDBConnected READ isDBConnected NOTIFY isDBConnectedChanged)
+    Q_PROPERTY(bool isDBConnected READ isDBConnected NOTIFY databaseConnectionChange)
 public:
     explicit DB_LocalStorage(QObject *parent = nullptr, const QString &databaseName="SimpleVault");
     ~DB_LocalStorage();
@@ -22,6 +25,7 @@ public:
     Q_INVOKABLE bool removeGroup(int groupID);
 
     Q_INVOKABLE bool addVaultRowEntry(int currGroupID, const QString &organizationName, const QString &username, const QString &pass);
+    QList<T> fetchCredentials(int currGroupID, Mapping mapper);
     // Q_INVOKABLE void removeVaultContent();
     bool isDBConnected();
 
@@ -35,13 +39,12 @@ signals:
     void databasePathEstablished(QString &path);
     void databaseQueryError(const QSqlError &error);
     void databaseQuerySuccess();
-    void isDBConnectedChanged();
+    void databaseConnectionChange();
 
 private:
     QSqlDatabase _db;
     bool m_connected;
     QString m_databaseName;
-
 };
 
 #endif // DB_LOCAL_H

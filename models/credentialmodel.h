@@ -12,6 +12,7 @@ public:
     explicit CredentialModel(QObject* parent = nullptr);
     enum CredentialRoles {
         GroupIDRole = Qt::UserRole + 1,
+        ContentIDRole,
         OrganizationRole,
         UsernameRole,
         Passwordrole

@@ -6,7 +6,8 @@
 // TODO: CredentialModel and Repository incomplete
 
 VaultManager::VaultManager(QObject *parent) {
-    m_model = new CredentialModel(this);
+    m_groupmodel = new GroupsModel(this);
+    m_credmodel = new CredentialModel(this);
     m_repository = new Repository(this);
 }
 

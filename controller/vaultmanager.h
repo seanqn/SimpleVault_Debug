@@ -15,7 +15,8 @@ public:
     Q_INVOKABLE void selectGroup(int groupID);
 
 private:
-    CredentialModel* m_model;
+    GroupsModel* m_groupmodel;
+    CredentialModel* m_credmodel;
     Repository* m_repository;
 };
 

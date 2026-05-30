@@ -22,6 +22,8 @@ QVariant CredentialModel::data(const QModelIndex &index, int role) const overrid
     switch (role) {
     case GroupIDRole:
         return credential.group_id;
+    case ContentIDRole:
+        return credential.content_id;
     case OrganizationRole:
         return credential.org_name;
     case UsernameRole:
@@ -38,6 +40,7 @@ QHash<int, QByteArray> CredentialModel::roleNames() const {
 
     QHash<int, QByteArray> roles;
     roles[GroupIDRole] = "group_id";
+    roles[ContentIDRole] = "content_id";
     roles[OrganizationRole] = "org_name";
     roles[UsernameRole] = "username";
     roles[Passwordrole] = "password";
