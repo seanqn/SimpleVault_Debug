@@ -1,7 +1,8 @@
 #include "credentialmodel.h"
 #include "data/credentialtypes.h"
 
-CredentialModel::CredentialModel(QObject *parent) {}
+CredentialModel::CredentialModel(QObject *parent)
+    : QAbstractListModel(parent) {}
 
 void CredentialModel::setCredentials(const QList<Credential> &credentials) {
     beginResetModel();
@@ -9,12 +10,12 @@ void CredentialModel::setCredentials(const QList<Credential> &credentials) {
     endResetModel();
 }
 
-// refreshes the UI dipslaying updated credentials
+// refreshes the UI displaying updated credentials
 void CredentialModel::update(QList<Credential> &data) {
 
 }
 
-QVariant CredentialModel::data(const QModelIndex &index, int role) const override {
+QVariant CredentialModel::data(const QModelIndex &index, int role) const {
     if (!index.isValid() || index.row() < 0 || index.row() >= m_list.size()) return QVariant();
 
     const Credential &credential = m_list.at(index.row());

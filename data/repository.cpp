@@ -2,15 +2,24 @@
 #include "repositories/db_local.h"
 #include "credentialtypes.h"
 
-Repository::Repository(DB_LocalStorage *_db, QObject *parent) {
-    m_db = _db;
+Repository::Repository(QObject *parent, const QString &databaseName)
+    : QObject(parent)
+{
+    m_db = new DB_LocalStorage(this, databaseName);
 }
 
 // TODO: encryption/decryption, refactor database methods to reflect repository implementation
 
+bool Repository::addGroup(const QString &groupName) {
+    if (m_db->addGroup(groupName) != -1) {
+        return true;
+    }
+    return false;
+}
+
 QList<Credential> Repository::fetchCredentials(int groupID) {
     m_cache.clear();
-    m_cache = m_db->fetchCredentials<Credential>(groupID, [](const QSqlRecord &record) {
+    m_cache = m_db->fetchCredentials<Credential>(groupID, [groupID](const QSqlRecord &record) {
         // retrieve column indices
         const int contentIndex = record.indexOf("content_id");
         const int orgIndex = record.indexOf("org_name");
@@ -37,7 +46,7 @@ void Repository::addCredential(Credential &credential) {
     // QString encryptedPasword = encrypt(credential.password);
 
     // int new_id = m_db->insertCredential(credential.username, encryptedPassword, credential.group_id);
-    credential.content_id = new_id;
+    // credential.content_id = new_id;
 
     m_cache.append(credential);
 

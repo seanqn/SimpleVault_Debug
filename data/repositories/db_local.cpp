@@ -2,7 +2,6 @@
 #include <QDebug>
 #include <QStandardPaths>
 #include <QDir>
-#include <QSqlQuery>
 #include "data/credentialtypes.h"
 
 // groups and vault content tables could be consolidated, only content model is needed
@@ -175,27 +174,5 @@ bool DB_LocalStorage::addVaultRowEntry(int currGroupID, const QString &organizat
 
     emit databaseQuerySuccess();
     return true;
-}
-
-// retrieves all credentials from a group
-template <typename T, typename Mapping>
-QList<T> DB_LocalStorage::fetchCredentials(int currGroupID, Mapping mapper) {
-    QList<T> credentials;
-    QSqlQuery _query(_db);
-    _query.prepare("SELECT content_id, org_name, username, password FROM vault_content WHERE group_id = :currGroupID");
-    _query.bindValue(":currGroupID", currGroupID);
-    QSqlRecord record = _query.record();
-
-    auto rowMapper = mapper(record);
-
-    if (!_query.exec()) {
-        emit databaseQueryError(_query.lastError());
-    }
-
-    while (_query.next()) {
-        credentials.append(rowMapper(_query));
-    }
-
-    return credentials;
 }
 

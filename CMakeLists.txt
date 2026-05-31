@@ -20,6 +20,10 @@ add_executable(SimpleVault
 
 # QML_IMPORT_PATH("/Users/shonny/Qt/6.9.3/macos/qml")
 
+target_sources(SimpleVault PRIVATE
+    data/credentialtypes.h
+)
+
 # after debug is finished, review and keep only necessary sources
 qt_add_qml_module(SimpleVault
     URI SimpleVault
@@ -37,7 +41,6 @@ qt_add_qml_module(SimpleVault
         # data/tests/db_local_tests.h data/tests/db_local_tests.cpp
         services/vaultsecurityservicer.h services/vaultsecurityservicer.cpp
         controller/vaultmanager.h controller/vaultmanager.cpp
-        data/credentialtypes.h
         data/repository.h data/repository.cpp
         models/credentialmodel.h models/credentialmodel.cpp
         models/groupsmodel.h models/groupsmodel.cpp

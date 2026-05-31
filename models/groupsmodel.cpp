@@ -1,6 +1,7 @@
 #include "groupsmodel.h"
 
-GroupsModel::GroupsModel(QObject* parent) {}
+GroupsModel::GroupsModel(QObject *parent)
+    : QAbstractListModel(parent) {}
 
 QHash<int, QByteArray> GroupsModel::roleNames() const {
     QHash<int, QByteArray> roles;
@@ -10,7 +11,7 @@ QHash<int, QByteArray> GroupsModel::roleNames() const {
     return roles;
 }
 
-QVariant GroupsModel::data(const QModelIndex &index, int role) const override {
+QVariant GroupsModel::data(const QModelIndex &index, int role) const {
     if (!index.isValid() || index.row() < 0)  return QVariant();
 
     switch (role) {
@@ -23,5 +24,9 @@ QVariant GroupsModel::data(const QModelIndex &index, int role) const override {
     default:
         return QVariant();
     }
+}
+
+void GroupsModel::setCurrentGroupID(int id) {
+    m_currentGroupID = id;
 }
 
