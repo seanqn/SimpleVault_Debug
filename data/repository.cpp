@@ -1,45 +1,72 @@
 #include "repository.h"
 #include "repositories/db_local.h"
-#include "credentialtypes.h"
 
 Repository::Repository(QObject *parent, const QString &databaseName)
     : QObject(parent)
 {
     m_db = new DB_LocalStorage(this, databaseName);
+
+    m_groupCache.clear();
+    m_credentialCache.clear();
 }
 
+// TODO: implement fetchGroup() as a function or extend logic in addGroup() to provide VaultManager a way to update the GroupsModel with a mapped Group struct
+// TODO: a new cache will have to be implemented as a private member to store all created groups (this may be able to leverage the group_id column in CredentialsModel)
 // TODO: encryption/decryption, refactor database methods to reflect repository implementation
+bool Repository::initDatabase() {
+    return m_db->initDB();
+}
 
-bool Repository::addGroup(const QString &groupName) {
-    if (m_db->addGroup(groupName) != -1) {
-        return true;
-    }
-    return false;
+// it is likely better to just call fetchGroups to return the cache back to the controller and along to the model
+// keeping this logic now to test funcion
+Group Repository::addGroup(const QString &groupName) {
+    Group newGroup = m_db->addGroup(groupName);
+    qDebug() << "[repository]: new group struct: [id]: " << newGroup.id << " [name]: " << newGroup.name << "[created_at]: " << newGroup.created_at;
+    m_groupCache.append(newGroup);
+    qDebug() << "groupCache size: " << m_groupCache.size();
+    return newGroup;
+}
+
+QList<Group> Repository::fetchGroups() {
+    m_groupCache = m_db->fetchRecords<Group>(
+        "groups",
+        {"id", "name", "created_at"},
+        [](auto mapper) {
+            Group g;
+            g.id = mapper("id").toInt();
+            g.name = mapper("name").toString();
+            g.created_at = mapper("created_at").toDateTime();
+            return g;
+        }
+    );
+
+    emit cacheFilled();
+    return m_groupCache;
+}
+
+
+bool Repository::renameGroup(int groupID, const QString &newName) {
+    qDebug() << "calling Repository::renameGroup() with " << newName;
+    return m_db->renameGroup(groupID, newName);
 }
 
 QList<Credential> Repository::fetchCredentials(int groupID) {
-    m_cache.clear();
-    m_cache = m_db->fetchCredentials<Credential>(groupID, [groupID](const QSqlRecord &record) {
-        // retrieve column indices
-        const int contentIndex = record.indexOf("content_id");
-        const int orgIndex = record.indexOf("org_name");
-        const int userIndex = record.indexOf("username");
-        const int passIndex = record.indexOf("password");
-
-        // map column values to respective Credential struct members to cache all entries for this current group
-        return [=](const QSqlQuery &query) {
+    m_credentialCache = m_db->fetchRecords<Credential>(
+        "vault_content",
+        {"group_id", "content_id", "org_name", "username", "password"},
+        [](auto mapper) {
             Credential c;
-            c.group_id = groupID;
-            c.content_id = query.value(contentIndex).toInt();
-            c.org_name = query.value(orgIndex).toString();
-            c.username = query.value(userIndex).toString();
-            c.password = query.value(passIndex).toString();
+            c.group_id = mapper("group_id").toInt();
+            c.content_id = mapper("content_id").toInt();
+            c.org_name = mapper("org_name").toString();
+            c.username = mapper("username").toString();
+            c.password = mapper("password").toString();
             return c;
-        };
-    });
+        }
+    );
 
     emit cacheFilled();
-    return m_cache;
+    return m_credentialCache;
 }
 
 void Repository::addCredential(Credential &credential) {
@@ -48,9 +75,9 @@ void Repository::addCredential(Credential &credential) {
     // int new_id = m_db->insertCredential(credential.username, encryptedPassword, credential.group_id);
     // credential.content_id = new_id;
 
-    m_cache.append(credential);
+    m_credentialCache.append(credential);
 
-    emit entryAdded(m_cache.size() - 1);
+    emit credentialEntryAdded(m_credentialCache.size() - 1);
 }
 
 // called when previously filled credentials are left blank or removed

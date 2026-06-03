@@ -4,29 +4,29 @@
 #include <QSqlQuery>
 #include <QSqlRecord>
 #include <QSqlError>
-
-struct Credential;
-
-// QML invokable macro will likely be redundant after repository is complete
+#include <QSqlDriver>
+#include "data/credentialtypes.h"
 
 class DB_LocalStorage : public QObject {
-    Q_PROPERTY(bool isDBConnected READ isDBConnected NOTIFY databaseConnectionChange)
+    Q_OBJECT
+    // Q_PROPERTY(bool isDBConnected READ isDBConnected NOTIFY databaseConnectionChange)
+
 public:
     explicit DB_LocalStorage(QObject *parent = nullptr, const QString &databaseName="SimpleVault");
     ~DB_LocalStorage();
 
     bool initDB();
     void closeDB();
-    int addGroup(const QString &groupName);
+    Group addGroup(const QString &groupName);
     QString fetchGroupName(int groupID);
     bool renameGroup(int groupID, const QString &newGroupName);
     bool removeGroup(int groupID);
     bool addVaultRowEntry(int currGroupID, const QString &organizationName, const QString &username, const QString &pass);
-
-    template <typename T, typename Mapping>
-    QList<Credential> fetchCredentials(int currGroupID, Mapping mapper);
-    // Q_INVOKABLE void removeVaultContent();
     bool isDBConnected();
+
+    // read operations specifically called by VaultManager to update the models
+    template <typename T, typename Mapping>
+    QList<T> fetchRecords(const QString &table, const QStringList &columns, Mapping mapper);
 
 signals:
     void initDBFailure(const QSqlError& error);
@@ -46,29 +46,84 @@ private:
     QString m_databaseName;
 };
 
-// provides a collection of all of the credentials for a selected group based on the provided mapping function
-// the mapping function will be expected to map each column value to its respective member as defined in the Credential struct
 template <typename T, typename Mapping>
-QList<Credential> DB_LocalStorage::fetchCredentials(int currGroupID, Mapping mapper) {
-    QList<Credential> credentials;
+QList<T> DB_LocalStorage::fetchRecords(const QString &table, const QStringList &columns, Mapping mapper) {
+    QList<T> values;
+
+    QString request = QString("SELECT %1 FROM %2").arg(columns.join(", "), table);
     QSqlQuery _query(_db);
-    _query.prepare("SELECT content_id, org_name, username, password FROM vault_content WHERE group_id = :currGroupID");
-    _query.bindValue(":currGroupID", currGroupID);
+    _query.prepare(request);
 
     if (!_query.exec()) {
         emit databaseQueryError(_query.lastError());
-        return credentials;
+        return values;
     }
 
     QSqlRecord record = _query.record();
 
-    auto rowMapper = mapper(record);
-
-    while (_query.next()) {
-        credentials.append(rowMapper(_query));
+    // map logic
+    QHash<QString, int> columnToIndex;
+    columnToIndex.reserve(columns.size());
+    for (const QString &col : columns) {
+        columnToIndex.insert(col, record.indexOf(col));
     }
 
-    return credentials;
+    if (_query.driver()->hasFeature(QSqlDriver::QuerySize)) {
+        values.reserve(_query.size());
+    }
+
+    while (_query.next()) {
+        auto valueName = [&](const QString &colName) -> QVariant {
+            int index = columnToIndex.value(colName, -1);
+            return (index != -1) ? _query.value(index) : QVariant();
+        };
+
+        values.append(mapper(valueName));
+    }
+
+    // vector logic
+    // QVector<int> indices;
+    // indices.reserve(columns.size());
+
+    // for (const QString &col : columns) {
+    //     indices.append(record.indexOf(col));
+    // }
+
+    // while (_query.next()) {
+    //     auto valueName = [&](const QString &colName) -> QVariant {
+    //         int curr = columns.indexOf(colName);
+    //         return _query.value(indices[curr]);
+    //     };
+
+    //     values.append(mapper(valueName));
+    // }
+
+    return values;
 }
+
+// this needs to be tested
+// saved method for potential to correspond logic with fetchCredentisl() logic
+
+// template <typename Mapping>
+// Group DB_LocalStorage::fetchGroups(Mapping mapper) {
+//     Group group;
+//     QSqlQuery _query(_db);
+//     _query.prepare("SELECT id, name, created_at FROM groups WHERE id = :currGroupID");
+//     _query.bindValue(":currGroupID", currGroupID);
+
+//     if (!_query.exec()) {
+//         emit databaseQueryError(_query.lastError());
+//         return group;
+//     }
+
+//     QSqlRecord = _query.record;
+
+//     auto rowMapper = mapper(record);
+//     while (_query.next()) {
+//         group.append(rowMapper(_query));
+//     }
+
+//     return group;
+// }
 
 #endif // DB_LOCAL_H

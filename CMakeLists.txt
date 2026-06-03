@@ -22,6 +22,10 @@ add_executable(SimpleVault
 
 target_sources(SimpleVault PRIVATE
     data/credentialtypes.h
+    data/repositories/db_local.h data/repositories/db_local.cpp
+    data/repository.h data/repository.cpp
+    models/credentialmodel.h models/credentialmodel.cpp
+    models/groupsmodel.h models/groupsmodel.cpp
 )
 
 # after debug is finished, review and keep only necessary sources
@@ -37,13 +41,8 @@ qt_add_qml_module(SimpleVault
         views/home/components/HomePane.qml
         tests/groups_vaultcontent_tests.qml
     SOURCES
-        data/repositories/db_local.h data/repositories/db_local.cpp
-        # data/tests/db_local_tests.h data/tests/db_local_tests.cpp
         services/vaultsecurityservicer.h services/vaultsecurityservicer.cpp
         controller/vaultmanager.h controller/vaultmanager.cpp
-        data/repository.h data/repository.cpp
-        models/credentialmodel.h models/credentialmodel.cpp
-        models/groupsmodel.h models/groupsmodel.cpp
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.

@@ -1,18 +1,25 @@
 #include "credentialmodel.h"
-#include "data/credentialtypes.h"
 
 CredentialModel::CredentialModel(QObject *parent)
     : QAbstractListModel(parent) {}
 
-void CredentialModel::setCredentials(const QList<Credential> &credentials) {
-    beginResetModel();
-    m_list = credentials;
-    endResetModel();
-}
+// TEST: remove redundant setCredentials() and move logic to update(), whichever is called primarily has a const type paramater
+
+// void CredentialModel::setCredentials(const QList<Credential> &credentials) {
+//     beginResetModel();
+//     m_list = credentials;
+//     endResetModel();
+// }
 
 // refreshes the UI displaying updated credentials
-void CredentialModel::update(QList<Credential> &data) {
+void CredentialModel::update(const QList<Credential> &data) {
+    // previous function logic
+    // setCredentials(data);
 
+    // updated function logic (formerly setCredentials())
+    beginResetModel();
+    m_list = data;
+    endResetModel();
 }
 
 QVariant CredentialModel::data(const QModelIndex &index, int role) const {
@@ -29,7 +36,7 @@ QVariant CredentialModel::data(const QModelIndex &index, int role) const {
         return credential.org_name;
     case UsernameRole:
         return credential.username;
-    case Passwordrole:
+    case PasswordRole:
         return credential.password;
     default:
         return QVariant();
@@ -37,13 +44,11 @@ QVariant CredentialModel::data(const QModelIndex &index, int role) const {
 }
 
 QHash<int, QByteArray> CredentialModel::roleNames() const {
-    QHash<int, QByteArray> role;
-
     QHash<int, QByteArray> roles;
     roles[GroupIDRole] = "group_id";
     roles[ContentIDRole] = "content_id";
     roles[OrganizationRole] = "org_name";
     roles[UsernameRole] = "username";
-    roles[Passwordrole] = "password";
+    roles[PasswordRole] = "password";
     return roles;
 }

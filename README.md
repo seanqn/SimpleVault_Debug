@@ -33,8 +33,8 @@ Refactoring towards an improved MVVM structure with a more focused
 controller (VaultManager) and a repository for dedicated database
 communication.
 
-Added repository in /data (will handle calls to database)
+Turned the database side read operations into a generic templated function
 
-Started refactor of VaultManager
+Added repository side lambda-based methods to read from database tables by currying
 
-CredentialModel to replace VaultContentModel
+Updated controller logic

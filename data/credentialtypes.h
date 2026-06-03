@@ -1,10 +1,17 @@
 #ifndef CREDENTIALTYPES_H
 #define CREDENTIALTYPES_H
+#include <QDateTime>
+// #include <QObject>
+// #include <QQmlEngine>
 
-#include <QObject>
-#include <QQmlEngine>
+// outlines the schema for groups and credentials in database
+struct Group {
+public:
+    int id = 0;
+    QString name;
+    QDateTime created_at;
+};
 
-// outlines the schema for credentials in database
 struct Credential {
 public:
     int group_id = 0;
@@ -14,6 +21,6 @@ public:
     QString password;
 };
 
-Q_DECLARE_METATYPE(Credential)
+// Q_DECLARE_METATYPE(Credential)
 
 #endif // CREDENTIALTYPES_H
