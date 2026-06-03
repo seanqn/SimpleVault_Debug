@@ -55,3 +55,7 @@ void VaultManager::renameGroup(const QString &newName) {
     }
 }
 
+void VaultManager::removeGroup(int index, int groupID) {
+    QList<Group> updatedGroups = m_repository->removeGroup(index, groupID);
+    m_groupsModel->update(updatedGroups);
+}
