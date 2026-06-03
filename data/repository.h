@@ -21,6 +21,7 @@ public:
     Group addGroup(const QString &groupName);
     QList<Group> fetchGroups();
     bool renameGroup(int groupID, const QString &newName);
+    QList<Group> removeGroup(int index, int groupID);
 
     QList<Credential> fetchCredentials(int groupID);
     void addCredential(Credential &credential);

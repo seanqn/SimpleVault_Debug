@@ -50,6 +50,19 @@ bool Repository::renameGroup(int groupID, const QString &newName) {
     return m_db->renameGroup(groupID, newName);
 }
 
+// based on the foreign key groups id = vault_content group_id, removal of a group is expected to cascade to all associated credentials
+// requires a return that is passed along to the controller to update the groups model
+// also requires that the credential cache is updated to reflect the credentials removed in that group
+QList<Group> Repository::removeGroup(int index, int groupID) {
+    // the group id removes the group from the database, the passed index is corresponds to the group at the cache's index to remove
+    m_db->removeGroup(groupID);
+    m_groupCache.removeAt(index);
+    // call to remove credentials
+
+    // return updated cache
+    return m_groupCache;
+}
+
 QList<Credential> Repository::fetchCredentials(int groupID) {
     m_credentialCache = m_db->fetchRecords<Credential>(
         "vault_content",
