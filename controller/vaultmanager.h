@@ -26,7 +26,7 @@ public:
     void updateGroups();
     Q_INVOKABLE void createGroup(const QString &name);
     Q_INVOKABLE void selectGroup(int groupID);
-    Q_INVOKABLE void renameGroup(const QString &newName);
+    Q_INVOKABLE void renameGroup(int index, const QString &newName);
     Q_INVOKABLE void removeGroup(int index, int groupID);
     Q_INVOKABLE int getCurrentGroupID() const { return m_currentGroupID; }
 

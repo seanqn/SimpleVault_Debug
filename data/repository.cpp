@@ -28,6 +28,9 @@ Group Repository::addGroup(const QString &groupName) {
 }
 
 QList<Group> Repository::fetchGroups() {
+    if (m_groupCache.isEmpty()) {
+        return m_groupCache;
+    }
     m_groupCache = m_db->fetchRecords<Group>(
         "groups",
         {"id", "name", "created_at"},
@@ -45,8 +48,7 @@ QList<Group> Repository::fetchGroups() {
 }
 
 
-bool Repository::renameGroup(int groupID, const QString &newName) {
-    qDebug() << "calling Repository::renameGroup() with " << newName;
+Group Repository::renameGroup(int index, const QString &newName) {
     return m_db->renameGroup(groupID, newName);
 }
 
@@ -64,22 +66,34 @@ QList<Group> Repository::removeGroup(int index, int groupID) {
 }
 
 QList<Credential> Repository::fetchCredentials(int groupID) {
-    m_credentialCache = m_db->fetchRecords<Credential>(
-        "vault_content",
-        {"group_id", "content_id", "org_name", "username", "password"},
-        [](auto mapper) {
-            Credential c;
-            c.group_id = mapper("group_id").toInt();
-            c.content_id = mapper("content_id").toInt();
-            c.org_name = mapper("org_name").toString();
-            c.username = mapper("username").toString();
-            c.password = mapper("password").toString();
-            return c;
-        }
-    );
 
-    emit cacheFilled();
-    return m_credentialCache;
+    if (m_credentialCache.isEmpty()) {
+        m_credentialCache = m_db->fetchRecords<Credential>(
+            "vault_content",
+            {"group_id", "content_id", "org_name", "username", "password"},
+            [](auto mapper) {
+                Credential c;
+                c.group_id = mapper("group_id").toInt();
+                c.content_id = mapper("content_id").toInt();
+                c.org_name = mapper("org_name").toString();
+                c.username = mapper("username").toString();
+                c.password = mapper("password").toString();
+                return c;
+            }
+            );
+
+        emit cacheFilled();
+        return m_credentialCache;
+    }
+
+    QList<Credential> filteredCredentials;
+    for (const auto &c : m_credentialCache) {
+        if (c.group_id == groupID) {
+            filteredCredentials.append(c);
+        }
+    }
+
+    return filteredCredentials;
 }
 
 void Repository::addCredential(Credential &credential) {

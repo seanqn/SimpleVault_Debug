@@ -40,19 +40,16 @@ void VaultManager::createGroup(const QString &name) {
     m_groupsModel->append(newGroup);
 }
 
-// see if the group id setter should be implemented as a member of the groups model or stay in the controller
 void VaultManager::selectGroup(int groupID) {
     QList<Credential> data = m_repository->fetchCredentials(groupID);
     m_credentialModel->update(data);
     m_currentGroupID = groupID;
-    emit groupChanged();
-    // m_groupsmodel.setCurrentGroupID(groupID);
+    m_groupsmodel.setCurrentGroupID(groupID);
 }
 
-void VaultManager::renameGroup(const QString &newName) {
-    if (m_repository->renameGroup(m_currentGroupID, newName)) {
-        // update groups model
-    }
+// QML could accept a valid new group name and let it be portrayed on the listview without bothering to update the model until the next
+// model will accurately update to the new name when it's retrieved from the database each build
+void VaultManager::renameGroup(int index, const QString &newName) {
 }
 
 void VaultManager::removeGroup(int index, int groupID) {

@@ -14,13 +14,13 @@ public:
 
     int groupCount() const { return m_groupCache.size(); }
     int credentialRowCount() const { return m_credentialCache.size(); }
-    // Group getGroupAt(int index) const { return m_groupCache.at(index); }
+    Group getGroupAt(int index) const { return m_groupCache.at(index); }
     // Credential getCredentialRowAt(int index) const { return m_credentialCache.at(index); }
 
     bool initDatabase();
     Group addGroup(const QString &groupName);
     QList<Group> fetchGroups();
-    bool renameGroup(int groupID, const QString &newName);
+    Group renameGroup(int index, const QString &newName);
     QList<Group> removeGroup(int index, int groupID);
 
     QList<Credential> fetchCredentials(int groupID);
