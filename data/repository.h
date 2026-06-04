@@ -20,7 +20,7 @@ public:
     bool initDatabase();
     Group addGroup(const QString &groupName);
     QList<Group> fetchGroups();
-    Group renameGroup(int index, const QString &newName);
+    Group renameGroup(Group &group, const QString &newName);
     QList<Group> removeGroup(int index, int groupID);
 
     QList<Credential> fetchCredentials(int groupID);

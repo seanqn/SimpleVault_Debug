@@ -47,9 +47,12 @@ QList<Group> Repository::fetchGroups() {
     return m_groupCache;
 }
 
+Group Repository::renameGroup(Group &group, const QString &newName) {
+    if (m_db->renameGroup(group.id, newName)) {
+        group.name = newName;
+    }
 
-Group Repository::renameGroup(int index, const QString &newName) {
-    return m_db->renameGroup(groupID, newName);
+    return group;
 }
 
 // based on the foreign key groups id = vault_content group_id, removal of a group is expected to cascade to all associated credentials
@@ -66,7 +69,6 @@ QList<Group> Repository::removeGroup(int index, int groupID) {
 }
 
 QList<Credential> Repository::fetchCredentials(int groupID) {
-
     if (m_credentialCache.isEmpty()) {
         m_credentialCache = m_db->fetchRecords<Credential>(
             "vault_content",

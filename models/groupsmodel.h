@@ -21,6 +21,7 @@ public:
     QVariant data(const QModelIndex &index, int role=Qt::DisplayRole) const override;
     void update(QList<Group> &groups);
     void append(Group &group);
+    void replaceName(int index, Group &group);
     void setCurrentGroupID(int id);
     int rowCount(const QModelIndex &parent = QModelIndex()) const override { return m_list.size(); }
 

@@ -24,6 +24,7 @@ public:
 
     void initRepository();
     void updateGroups();
+    void updateCredentials();
     Q_INVOKABLE void createGroup(const QString &name);
     Q_INVOKABLE void selectGroup(int groupID);
     Q_INVOKABLE void renameGroup(int index, const QString &newName);
@@ -35,8 +36,10 @@ signals:
     void groupAdded();
     void createGroupError();
     void groupsUpdateError();
+    void credentialsUpdateError();
     void groupChanged();
-    void groupRenamed();
+    void groupRenamed(int id, QString name);
+    void groupRenameError(int id, QString name);
     void groupRemoved();
     void credentialToCache();
     void credentialRowToDatabase();

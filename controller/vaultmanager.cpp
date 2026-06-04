@@ -22,7 +22,6 @@ void VaultManager::initRepository() {
 void VaultManager::updateGroups() {
     QList<Group> groups = m_repository->fetchGroups();
     if (groups.isEmpty()) {
-        emit groupsUpdateError();
         return;
     }
 
@@ -41,15 +40,27 @@ void VaultManager::createGroup(const QString &name) {
 }
 
 void VaultManager::selectGroup(int groupID) {
-    QList<Credential> data = m_repository->fetchCredentials(groupID);
-    m_credentialModel->update(data);
     m_currentGroupID = groupID;
-    m_groupsmodel.setCurrentGroupID(groupID);
+    QList<Credential> credentials = m_repository->fetchCredentials(groupID);
+
+    if (credentials.isEmpty()) {
+        return;
+    }
+
+    m_credentialModel->update(credentials);
 }
 
-// QML could accept a valid new group name and let it be portrayed on the listview without bothering to update the model until the next
-// model will accurately update to the new name when it's retrieved from the database each build
+// rename will be selected via a right-click context menu option, which is not necessarily reflective of the current (double-click selected) group id
+// QML will know what group is actually in context since it will be assigned as the current index, and then gets the group id at that index so that it is updated in the database
 void VaultManager::renameGroup(int index, const QString &newName) {
+    // get the id of that group in the respective cache
+    Group groupAtIndex = m_repository->getGroupAt(index);
+    groupAtIndex = m_repository->renameGroup(groupAtIndex, newName);
+    if (groupAtIndex.name == newName) {
+        m_groupsModel->replaceName(index, groupAtIndex);
+        emit groupRenamed(groupAtIndex.id, newName);
+    }
+    emit groupRenameError(groupAtIndex.id, groupAtIndex.name);
 }
 
 void VaultManager::removeGroup(int index, int groupID) {

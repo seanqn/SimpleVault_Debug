@@ -3,7 +3,7 @@
 CredentialModel::CredentialModel(QObject *parent)
     : QAbstractListModel(parent) {}
 
-// TEST: remove redundant setCredentials() and move logic to update(), whichever is called primarily has a const type paramater
+// TODO: move all non-overridden methods to controller
 
 // void CredentialModel::setCredentials(const QList<Credential> &credentials) {
 //     beginResetModel();
@@ -13,10 +13,6 @@ CredentialModel::CredentialModel(QObject *parent)
 
 // refreshes the UI displaying updated credentials
 void CredentialModel::update(const QList<Credential> &data) {
-    // previous function logic
-    // setCredentials(data);
-
-    // updated function logic (formerly setCredentials())
     beginResetModel();
     m_list = data;
     endResetModel();

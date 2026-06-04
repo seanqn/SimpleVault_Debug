@@ -6,7 +6,7 @@ GroupsModel::GroupsModel(QObject *parent)
     : QAbstractListModel(parent) {}
 
 // upate() and append() both existing is redundant, will want to consolidate to one
-
+// TODO: move all non-overridden methods to controller
 void GroupsModel::update(QList<Group> &groups) {
     beginResetModel();
     m_list = groups;
@@ -17,6 +17,17 @@ void GroupsModel::update(QList<Group> &groups) {
 void GroupsModel::append(Group &group) {
     beginResetModel();
     m_list.append(group);
+    endResetModel();
+}
+
+// prototype using a list, will be refactored along with repository List types later
+// if keeping, should generalize method to accept any group member or a group object
+void GroupsModel::replaceName(int index, Group &group) {
+    if (!(m_list.size() <= index)) {
+        return;
+    }
+    beginResetModel();
+    m_list.replace(index, group);
     endResetModel();
 }
 
