@@ -5,30 +5,34 @@
 GroupsModel::GroupsModel(QObject *parent)
     : QAbstractListModel(parent) {}
 
-// upate() and append() both existing is redundant, will want to consolidate to one
-// TODO: move all non-overridden methods to controller
+// update() is when the model needs to be populated with the groups database table during builds
 void GroupsModel::update(QList<Group> &groups) {
     beginResetModel();
     m_list = groups;
     endResetModel();
 }
 
-// check to make sure that appending will update the list view or if requires update()
 void GroupsModel::append(Group &group) {
     beginResetModel();
     m_list.append(group);
     endResetModel();
 }
 
-// prototype using a list, will be refactored along with repository List types later
-// if keeping, should generalize method to accept any group member or a group object
-void GroupsModel::replaceName(int index, Group &group) {
-    if (!(m_list.size() <= index)) {
-        return;
+// replacement is only relevant to a groups Group.name member
+void GroupsModel::rename(int index, const QString &name) {
+    if (m_list.size() <= index) {
+        beginResetModel();
+        m_list.at(index).name.assign(name);
+        endResetMode();
     }
-    beginResetModel();
-    m_list.replace(index, group);
-    endResetModel();
+}
+
+void GroupsModel::remove(int index) {
+    if (m_list.size() <= index) {
+        beginResetModel();
+        m_list.remove(index);
+        endResetModel();
+    }
 }
 
 QHash<int, QByteArray> GroupsModel::roleNames() const {
@@ -54,9 +58,5 @@ QVariant GroupsModel::data(const QModelIndex &index, int role) const {
     default:
         return QVariant();
     }
-}
-
-void GroupsModel::setCurrentGroupID(int id) {
-    m_currentGroupID = id;
 }
 

@@ -16,14 +16,16 @@ public:
     explicit GroupsModel(QObject *parent = nullptr);
     QHash<int, QByteArray> roleNames() const override;
     QVariant data(const QModelIndex &index, int role=Qt::DisplayRole) const override;
-    void update(QList<Group> &groups);
-    void append(Group &group);
-    void replaceName(int index, Group &group);
-    void setCurrentGroupID(int id);
     int rowCount(const QModelIndex &parent = QModelIndex()) const override { return m_list.size(); }
+    void update(QList<Group> &groups);
+
+public slots:
+    void append(Group &group);
+    void rename(int index, const QString &name);
+    void remove(int index);
 
 private:
-    int m_currentGroupID;
+    // the actual structure of this model essentially just serves as the destination for the repository group cache
     QList<Group> m_list;
 };
 

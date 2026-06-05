@@ -46,6 +46,8 @@ private:
     QString m_databaseName;
 };
 
+// method serves as a general utility method which can fetch from any table based on column names
+// the mapper parameter will expect function calls to consolidate passed in parameters in lambda form
 template <typename T, typename Mapping>
 QList<T> DB_LocalStorage::fetchRecords(const QString &table, const QStringList &columns, Mapping mapper) {
     QList<T> values;
@@ -80,23 +82,6 @@ QList<T> DB_LocalStorage::fetchRecords(const QString &table, const QStringList &
 
         values.append(mapper(valueName));
     }
-
-    // vector logic
-    // QVector<int> indices;
-    // indices.reserve(columns.size());
-
-    // for (const QString &col : columns) {
-    //     indices.append(record.indexOf(col));
-    // }
-
-    // while (_query.next()) {
-    //     auto valueName = [&](const QString &colName) -> QVariant {
-    //         int curr = columns.indexOf(colName);
-    //         return _query.value(indices[curr]);
-    //     };
-
-    //     values.append(mapper(valueName));
-    // }
 
     return values;
 }

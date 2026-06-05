@@ -14,9 +14,14 @@ VaultManager::VaultManager(QObject *parent, Repository *repository, const QStrin
 
     initRepository();
 
-    // TODO: declare signals in repository and slots corresponding slots in models
-    // connect(m_repository, &Repository::groupAdded, m_groupsModel, &GroupsModel::onGroupAdded);
-    // connect(m_repository, &Repository::credentialEntryAdded, m_credentialModel, &CredentialModel::onCredentialEntryAdded);
+    connect(m_repository, &Repository::groupAdded, m_groupsModel, &GroupsModel::append);
+    connect(m_repository, &Repository::groupRemoved, m_groupsModel, &GroupsModel::remove);
+    connect(m_repository, &Repository::groupRenamed, m_groupsModel, &GroupsModel::rename);
+
+    // connect(m_repository, &Repository::credentialEntryAdded, m_credentialModel, &CredentialModel::append);
+    // connect(m_repository, &Repository::credentialEntryRemoved, m_credentialModel, &CredentialModel::remove);
+    // connect(m_repository, &Repository::credentialColumnModified, m_credentialModel, &CredentialModel::modify);
+
     updateGroups();
 }
 

@@ -14,11 +14,11 @@ public:
 
     int groupCount() const { return m_groupCache.size(); }
     int credentialRowCount() const { return m_credentialCache.size(); }
-    Group getGroupAt(int index) const { return m_groupCache.at(index); }
-    // Credential getCredentialRowAt(int index) const { return m_credentialCache.at(index); }
+    Group getGroupAt(int index) const { return m_groupCache.value(index); }
+    // Credential getCredentialRowAt(int index) const { return m_credentialCache(index); }
 
     bool initDatabase();
-    Group addGroup(const QString &groupName);
+    void addGroup(const QString &groupName);
     QList<Group> fetchGroups();
     Group renameGroup(Group &group, const QString &newName);
     bool removeGroup(int index, int groupID);
@@ -29,6 +29,9 @@ public:
     void removeCredentialRow(int contentID);
 
 signals:
+    void groupEntryAdded(Group &group);
+    void groupEntryRemoved(int index);
+    void groupEntryRenamed(int index, const QString &name);
     void cacheFilled();
     void credentialEntryAdded(int index);
     void credentialEntryRemoved(int index);

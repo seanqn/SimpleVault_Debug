@@ -19,12 +19,18 @@ bool Repository::initDatabase() {
 
 // it is likely better to just call fetchGroups to return the cache back to the controller and along to the model
 // keeping this logic now to test funcion
-Group Repository::addGroup(const QString &groupName) {
+void Repository::addGroup(const QString &groupName) {
     Group newGroup = m_db->addGroup(groupName);
     qDebug() << "[repository]: new group struct: [id]: " << newGroup.id << " [name]: " << newGroup.name << "[created_at]: " << newGroup.created_at;
-    m_groupCache.append(newGroup);
+    if (newGroup.id == 0) {
+        // emit error
+        return;
+    }
+
+    // key is the group's id as fetched from the table
+    m_groupCache.insert(newGroup.id, newGroup.name);
     qDebug() << "groupCache size: " << m_groupCache.size();
-    return newGroup;
+    emit groupEntryAdded(newGroup);
 }
 
 QList<Group> Repository::fetchGroups() {
@@ -47,25 +53,27 @@ QList<Group> Repository::fetchGroups() {
     return m_groupCache;
 }
 
-Group Repository::renameGroup(Group &group, const QString &newName) {
+void Repository::renameGroup(Group &group, const QString &newName) {
     if (m_db->renameGroup(group.id, newName)) {
         group.name = newName;
     }
 
-    return group;
+    emit groupEntryRenamed(group.id, group.name);
 }
 
 // based on the foreign key groups id = vault_content group_id, removal of a group is expected to cascade to all associated credentials
 // requires a return that is passed along to the controller to update the groups model
 // also requires that the credential cache is updated to reflect the credentials removed in that group
-QList<Group> Repository::removeGroup(int index, int groupID) {
+bool Repository::removeGroup(int index, int groupID) {
     // the group id removes the group from the database, the passed index is corresponds to the group at the cache's index to remove
     m_db->removeGroup(groupID);
     if (m_groupCache.remove(index) == 1) {
+        emit groupEntryRemoved(index);
         return true;
     }
-    return false;
     // call to remove credentials
+
+    return false;
 }
 
 // lambda effectively passes a template type Mapping object to the required paramater
