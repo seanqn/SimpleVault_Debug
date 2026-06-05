@@ -61,42 +61,43 @@ Group Repository::renameGroup(Group &group, const QString &newName) {
 QList<Group> Repository::removeGroup(int index, int groupID) {
     // the group id removes the group from the database, the passed index is corresponds to the group at the cache's index to remove
     m_db->removeGroup(groupID);
-    m_groupCache.removeAt(index);
+    if (m_groupCache.remove(index) == 1) {
+        return true;
+    }
+    return false;
     // call to remove credentials
-
-    // return updated cache
-    return m_groupCache;
 }
 
-QList<Credential> Repository::fetchCredentials(int groupID) {
-    if (m_credentialCache.isEmpty()) {
-        m_credentialCache = m_db->fetchRecords<Credential>(
-            "vault_content",
-            {"group_id", "content_id", "org_name", "username", "password"},
-            [](auto mapper) {
-                Credential c;
-                c.group_id = mapper("group_id").toInt();
-                c.content_id = mapper("content_id").toInt();
-                c.org_name = mapper("org_name").toString();
-                c.username = mapper("username").toString();
-                c.password = mapper("password").toString();
-                return c;
-            }
-            );
+// lambda effectively passes a template type Mapping object to the required paramater
+// need to optimize this method for map cache
+// QList<Credential> Repository::fetchCredentials(int groupID) {
+//     if (m_credentialCache.isEmpty()) {
+//         QList<Credential> recordList = m_db->fetchRecords<Credential>(
+//             "vault_content",
+//             {"group_id", "content_id", "org_name", "username", "password"},
+//             [](auto mapper) {
+//                 Credential c;
+//                 c.group_id = mapper("group_id").toInt();
+//                 c.content_id = mapper("content_id").toInt();
+//                 c.org_name = mapper("org_name").toString();
+//                 c.username = mapper("username").toString();
+//                 c.password = mapper("password").toString();
+//                 return c;
+//             }
+//             );
 
-        emit cacheFilled();
-        return m_credentialCache;
-    }
+//         emit cacheFilled();
+//         return m_credentialCache;
+//     }
 
-    QList<Credential> filteredCredentials;
-    for (const auto &c : m_credentialCache) {
-        if (c.group_id == groupID) {
-            filteredCredentials.append(c);
-        }
-    }
+//     for (const auto &c : recordList) {
+//         if (c.group_id == groupID) {
+//             m_credentialCache.insert(c);
+//         }
+//     }
 
-    return filteredCredentials;
-}
+//     return filteredCredentials;
+// }
 
 void Repository::addCredential(Credential &credential) {
     // QString encryptedPasword = encrypt(credential.password);
@@ -104,7 +105,7 @@ void Repository::addCredential(Credential &credential) {
     // int new_id = m_db->insertCredential(credential.username, encryptedPassword, credential.group_id);
     // credential.content_id = new_id;
 
-    m_credentialCache.append(credential);
+    m_credentialCache.insert(credential);
 
     emit credentialEntryAdded(m_credentialCache.size() - 1);
 }

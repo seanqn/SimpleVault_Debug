@@ -5,12 +5,18 @@
 
 // TODO: QSortFilterProxyModel can filter vault content based on group_id via the groups model without needing to restructure how the data is retrieved from the repository
 
-VaultManager::VaultManager(QObject *parent, const QString &databaseName) {
+// REFACTOR: removing read operations away from controller/repoository communication and just letting the repository handle model read updates via signals
+VaultManager::VaultManager(QObject *parent, Repository *repository, const QString &databaseName)
+    : QObject(parent), m_repository(repository, databaseName) {
+
     m_groupsModel = new GroupsModel(this);
     m_credentialModel = new CredentialModel(this);
-    m_repository = new Repository(this, databaseName);
 
     initRepository();
+
+    // TODO: declare signals in repository and slots corresponding slots in models
+    // connect(m_repository, &Repository::groupAdded, m_groupsModel, &GroupsModel::onGroupAdded);
+    // connect(m_repository, &Repository::credentialEntryAdded, m_credentialModel, &CredentialModel::onCredentialEntryAdded);
     updateGroups();
 }
 
@@ -19,14 +25,14 @@ void VaultManager::initRepository() {
 }
 
 // ideally should only be called by the constructor and other members
-void VaultManager::updateGroups() {
-    QList<Group> groups = m_repository->fetchGroups();
-    if (groups.isEmpty()) {
-        return;
-    }
+// void VaultManager::updateGroups() {
+//     QList<Group> groups = m_repository->fetchGroups();
+//     if (groups.isEmpty()) {
+//         return;
+//     }
 
-    m_groupsModel->update(groups);
-}
+//     m_groupsModel->update(groups);
+// }
 
 // database write entry is added to database and only appended to the cache
 void VaultManager::createGroup(const QString &name) {

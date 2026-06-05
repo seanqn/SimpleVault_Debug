@@ -21,7 +21,7 @@ public:
     Group addGroup(const QString &groupName);
     QList<Group> fetchGroups();
     Group renameGroup(Group &group, const QString &newName);
-    QList<Group> removeGroup(int index, int groupID);
+    bool removeGroup(int index, int groupID);
 
     QList<Credential> fetchCredentials(int groupID);
     void addCredential(Credential &credential);
@@ -35,8 +35,8 @@ signals:
 
 private:
     DB_LocalStorage *m_db;
-    QList<Credential> m_credentialCache;
-    QList<Group> m_groupCache;
+    QMap<int, Credential> m_credentialCache;
+    QMap<int, Group> m_groupCache;
 };
 
 #endif // REPOSITORY_H

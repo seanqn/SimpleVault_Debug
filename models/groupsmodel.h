@@ -2,11 +2,8 @@
 #define GROUPSMODEL_H
 
 #include <QAbstractListModel>
-#include <data/credentialtypes.h>
+#include "data/credentialtypes.h"
 
-// TODO: sruct member added, needs to be checked
-
-// models are passed via QML property macros in the controller class and registers it as type for QML while staying private
 class GroupsModel : public QAbstractListModel {
     Q_OBJECT
 
