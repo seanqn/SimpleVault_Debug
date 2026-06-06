@@ -21,7 +21,7 @@ public:
 
 public slots:
     void append(Group &group);
-    void rename(int index, const QString &name);
+    void rename(int id, const QString &name);
     void remove(int index);
 
 private:

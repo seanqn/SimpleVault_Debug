@@ -14,17 +14,19 @@ public:
 
     int groupCount() const { return m_groupCache.size(); }
     int credentialRowCount() const { return m_credentialCache.size(); }
-    Group getGroupAt(int index) const { return m_groupCache.value(index); }
-    // Credential getCredentialRowAt(int index) const { return m_credentialCache(index); }
+
+    // these getters are redundant since the cache is only reflective of the tables at build and not for live modifications
+    // Group getGroupAt(int index) const { return m_groupCache[index]; }
+    // Credential getCredentialRowAt(int index) const { return m_credentialCache.value(index); }
 
     bool initDatabase();
-    void addGroup(const QString &groupName);
-    QList<Group> fetchGroups();
-    Group renameGroup(Group &group, const QString &newName);
+    bool addGroup(const QString &groupName);
+    bool fetchGroups();
+    bool renameGroup(int groupID, const QString &newName);
     bool removeGroup(int index, int groupID);
 
-    QList<Credential> fetchCredentials(int groupID);
-    void addCredential(Credential &credential);
+    bool fetchCredentials(int groupID);
+    bool addCredential(int groupID, Credential &credential);
     void removeCredential(Credential &credential);
     void removeCredentialRow(int contentID);
 
@@ -32,14 +34,14 @@ signals:
     void groupEntryAdded(Group &group);
     void groupEntryRemoved(int index);
     void groupEntryRenamed(int index, const QString &name);
-    void cacheFilled();
+    void groupCacheFilled(QList<Group> &cache);
     void credentialEntryAdded(int index);
     void credentialEntryRemoved(int index);
 
 private:
     DB_LocalStorage *m_db;
-    QMap<int, Credential> m_credentialCache;
-    QMap<int, Group> m_groupCache;
+    QList<Credential> m_credentialCache;
+    QList<Group> m_groupCache;
 };
 
 #endif // REPOSITORY_H

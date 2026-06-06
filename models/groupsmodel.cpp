@@ -13,26 +13,32 @@ void GroupsModel::update(QList<Group> &groups) {
 }
 
 void GroupsModel::append(Group &group) {
-    beginResetModel();
+    beginInsertRows(QModelIndex(), m_list.size(), m_list.size());
     m_list.append(group);
-    endResetModel();
+    endInsertRows();
 }
 
 // replacement is only relevant to a groups Group.name member
-void GroupsModel::rename(int index, const QString &name) {
-    if (m_list.size() <= index) {
-        beginResetModel();
-        m_list.at(index).name.assign(name);
-        endResetMode();
+void GroupsModel::rename(int id, const QString &name) {
+    for (int i = 0; i < m_list.size(); ++i) {
+        if (m_list[i].id == id) {
+            m_list[i].name = name;
+            QModelIndex modelIndex = createIndex(i, 0);
+            emit dataChanged(modelIndex, modelIndex, {GroupNameRole});
+            return;
+        }
     }
 }
 
 void GroupsModel::remove(int index) {
-    if (m_list.size() <= index) {
-        beginResetModel();
-        m_list.remove(index);
-        endResetModel();
+    // index could not out of range, standard guard
+    if (index < 0 || index >= m_list.size()) {
+        return;
     }
+
+    beginRemoveRows(QModelIndex(), index, index);
+    m_list.removeAt(index);
+    endRemoveRows();
 }
 
 QHash<int, QByteArray> GroupsModel::roleNames() const {

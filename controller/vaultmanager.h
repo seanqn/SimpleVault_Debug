@@ -16,40 +16,56 @@ class VaultManager : public QObject {
     Q_PROPERTY(CredentialModel* credentialModel READ credentialModel CONSTANT)
     Q_PROPERTY(GroupsModel* groupsModel READ groupsModel CONSTANT)
     Q_PROPERTY(int getCurrentGroupID READ getCurrentGroupID NOTIFY groupChanged)
+    Q_PROPERTY(int getCurrentContentID READ getCurrentContentID NOTIFY credentialRowChanged)
 
 public:
-    explicit VaultManager(QObject* parent = nullptr, Repository* repository, const QString &databaseName="SimpleVault");
+    explicit VaultManager(QObject* parent = nullptr, const QString &databaseName="SimpleVault");
     GroupsModel* groupsModel() const { return m_groupsModel; }
     CredentialModel* credentialModel() const { return m_credentialModel; }
-
     void initRepository();
     void updateGroups();
     void updateCredentials();
+
     Q_INVOKABLE void createGroup(const QString &name);
     Q_INVOKABLE void selectGroup(int groupID);
-    Q_INVOKABLE void renameGroup(int index, const QString &newName);
+    Q_INVOKABLE void renameGroup(int groupID, const QString &newName);
     Q_INVOKABLE void removeGroup(int index, int groupID);
     Q_INVOKABLE int getCurrentGroupID() const { return m_currentGroupID; }
 
+    // Q_INVOKABLE void createCredentialRow();
+
+    /* modify includes removing, renaming, or assigning a credential to a credential row
+    (technically reassigned to the corresponding Credential struct member, equivalent to adding a new column value row)
+    */
+    // Q_INVOKABLE void modifyCredential();
+    // Q_INVOKABLE void removeCredentialRow();
+    Q_INVOKABLE int getCurrentContentID() const { return m_currentContentID; }
+
 signals:
     void repositoryInitializationError();
+
     void groupAdded();
     void createGroupError();
     void groupsUpdateError();
-    void credentialsUpdateError();
     void groupChanged();
-    void groupRenamed(int id, QString name);
-    void groupRenameError(int id, QString name);
+    void groupRenamed(const QString &name);
+    void groupRenameError();
     void groupRemoved(int id);
-    void credentialToCache();
-    void credentialRowToDatabase();
+    void groupRemoveError(int id);
 
+    // void credentialAdded();
+    // void createCredentialsError();
+    // void credentialsUpdateError();
+    void credentialRowChanged();
+    // void credentialModified();
+    // void credentialRowRemoveError();
 
 private:
     GroupsModel* m_groupsModel;
     CredentialModel* m_credentialModel;
     Repository* m_repository;
     int m_currentGroupID;
+    int m_currentContentID;
 };
 
 #endif // VAULTMANAGER_H
