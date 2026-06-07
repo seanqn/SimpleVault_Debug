@@ -20,9 +20,9 @@ VaultManager::VaultManager(QObject *parent, const QString &databaseName)
     connect(m_repository, &Repository::groupEntryRemoved, m_groupsModel, &GroupsModel::remove);
     connect(m_repository, &Repository::groupEntryRenamed, m_groupsModel, &GroupsModel::rename);
 
-    // connect(m_repository, &Repository::credentialEntryAdded, m_credentialModel, &CredentialModel::append);
-    // connect(m_repository, &Repository::credentialEntryRemoved, m_credentialModel, &CredentialModel::remove);
-    // connect(m_repository, &Repository::credentialColumnModified, m_credentialModel, &CredentialModel::modify);
+    // connect(m_repository, &Repository::credentialRowAdded, m_credentialModel, &CredentialModel::appendRow);
+    // connect(m_repository, &Repository::credentialRowRemoved, m_credentialModel, &CredentialModel::removeRow);
+    // connect(m_repository, &Repository::credentialColumnModified, m_credentialModel, &CredentialModel::modifyColumn);
 
     updateGroups();
 }
@@ -53,9 +53,9 @@ void VaultManager::createGroup(const QString &name) {
 void VaultManager::selectGroup(int groupID) {
     m_currentGroupID = groupID;
     emit groupChanged();
-    // if (m_repository->fetchCredentials(groupID)) {
-    //     return;
-    // }
+    if (m_repository->fetchCredentials(groupID)) {
+        return;
+    }
 }
 
 // rename will be selected via a right-click context menu option, which is not necessarily reflective of the current (double-click selected) group id

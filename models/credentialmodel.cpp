@@ -12,10 +12,43 @@ CredentialModel::CredentialModel(QObject *parent)
 // }
 
 // refreshes the UI displaying updated credentials
-void CredentialModel::update(const QList<Credential> &data) {
+void CredentialModel::update(const QList<Credential> &credentials) {
     beginResetModel();
-    m_list = data;
+    m_list = credentials;
     endResetModel();
+}
+
+void CredentialModel::appendRow(Credential &row) {
+    beginInserRows(QModelIndex(), m_list.size(), m_list.size());
+    m_list.append(row);
+    endInsertRows();
+}
+
+void CredentialModel::modifyColumn(int contentID, int column, const QString &credential) {
+    if (column < 2 || column > 4 || contentID >= m_list.size()) {
+        return;
+    }
+
+    for (int i = 0; i < m_list.size(); ++i) {
+        if (m_list[i].content_id == contentID) {
+            switch(column) {
+            case 2:
+                m_list[i][column].org_name = credential;
+                const QString role = OrganizationRole;
+            case 3:
+                m_list[i][column].username = credential;
+                const QString role = UsernameRole;
+            case 4:
+                m_list[i][column].password = credential;
+                const QString role = PasswordRole;
+            default:
+                return;
+            }
+
+            QModelIndex modelIndex = createIndex(i, 0);
+            emit dataChanged(modelIndex, modelIndex, {role})
+        }
+    }
 }
 
 QVariant CredentialModel::data(const QModelIndex &index, int role) const {

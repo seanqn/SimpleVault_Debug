@@ -20,9 +20,13 @@ public:
     };
     QHash<int, QByteArray> roleNames() const override;
     QVariant data(const QModelIndex &index, int role) const override;
-    // void setCredentials(const QList<Credential> &credentials);
-    void update(const QList<Credential> &data);
     int rowCount(const QModelIndex &parent = QModelIndex()) const override { return m_list.size(); }
+
+public slots:
+    void update(const QList<Credential> &credentials);
+    void appendRow(Credential &row);
+    void removeRow(int contentID);
+    void modifyColumn(int contentID, int column, const QString &credential);
 
 private:
     QList<Credential> m_list;

@@ -72,7 +72,7 @@ bool Repository::removeGroup(int index, int groupID) {
 // need to optimize this method for map cache
 // QList<Credential> Repository::fetchCredentials(int groupID) {
 //     if (m_credentialCache.isEmpty()) {
-//         QList<Credential> recordList = m_db->fetchRecords<Credential>(
+//         QList<Credential> m_credentialCache = m_db->fetchRecords<Credential>(
 //             "vault_content",
 //             {"group_id", "content_id", "org_name", "username", "password"},
 //             [](auto mapper) {
@@ -83,20 +83,16 @@ bool Repository::removeGroup(int index, int groupID) {
 //                 c.username = mapper("username").toString();
 //                 c.password = mapper("password").toString();
 //                 return c;
-//             }
+//             },
+//             "WHERE group_id = :groupID",
+//             {{":groupID", groupID}}
 //             );
 
 //         emit cacheFilled();
 //         return m_credentialCache;
 //     }
 
-//     for (const auto &c : recordList) {
-//         if (c.group_id == groupID) {
-//             m_credentialCache.insert(c);
-//         }
-//     }
-
-//     return filteredCredentials;
+//     return m_credentialCache;
 // }
 
 // bool Repository::addCredential(int groupID, Credential &credential) {

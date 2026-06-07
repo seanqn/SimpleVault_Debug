@@ -48,19 +48,50 @@ private:
 
 // method serves as a general utility method which can fetch from any table based on column names
 // the mapper parameter will expect function calls to consolidate passed in parameters in lambda form
+
+/*
+updated logic includes an argument that accepts a conditional statement which is important for fetching
+credentials based on the current group id
+another argument accepts bindings for condition variables
+*/
 template <typename T, typename Mapping>
-QList<T> DB_LocalStorage::fetchRecords(const QString &table, const QStringList &columns, Mapping mapper) {
+QList<T> DB_LocalStorage::fetchRecords(
+    const QString &table,
+    const QStringList &columns,
+    Mapping mapper,
+    const QString &condition = QString(),
+    const QVariantMap &bindings = QVariantMap()
+    ) {
+
     QList<T> values;
 
+    // collect the request and append the condition if necessary
     QString request = QString("SELECT %1 FROM %2").arg(columns.join(", "), table);
+    if (!condition.isEmpty()) {
+        request += " " + condition;
+    }
+
     QSqlQuery _query(_db);
-    _query.prepare(request);
+    if (!_query.prepare(request)) {
+        emit databaseQueryError(_query.lastError());
+        return values;
+    }
+
+    // iterate through the map if it was passed and bind variables
+    if (!bindings.isEmpty()) {
+        QVariantMap::const_iterator i = bindings.constBegin();
+        while (i != bindings.constEnd()) {
+            _query.bindValue(i.key(), i.value());
+            ++i;
+        }
+    }
 
     if (!_query.exec()) {
         emit databaseQueryError(_query.lastError());
         return values;
     }
 
+    // start fetching the fields
     QSqlRecord record = _query.record();
 
     // map logic

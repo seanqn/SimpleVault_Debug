@@ -8,12 +8,12 @@ class GroupsModel : public QAbstractListModel {
     Q_OBJECT
 
 public:
+    explicit GroupsModel(QObject *parent = nullptr);
     enum GroupRoles {
         IDRole = Qt::UserRole + 1,
         GroupNameRole,
         CreatedAtRole
     };
-    explicit GroupsModel(QObject *parent = nullptr);
     QHash<int, QByteArray> roleNames() const override;
     QVariant data(const QModelIndex &index, int role=Qt::DisplayRole) const override;
     int rowCount(const QModelIndex &parent = QModelIndex()) const override { return m_list.size(); }
