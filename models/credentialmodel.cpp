@@ -18,38 +18,39 @@ void CredentialModel::update(const QList<Credential> &credentials) {
     endResetModel();
 }
 
-void CredentialModel::appendRow(Credential &row) {
-    beginInserRows(QModelIndex(), m_list.size(), m_list.size());
-    m_list.append(row);
+void CredentialModel::appendRow() {
+    beginInsertRows(QModelIndex(), m_list.size(), m_list.size());
+    Credential tmpRow;
+    m_list.append(tmpRow);
     endInsertRows();
 }
 
-void CredentialModel::modifyColumn(int contentID, int column, const QString &credential) {
-    if (column < 2 || column > 4 || contentID >= m_list.size()) {
-        return;
-    }
+// void CredentialModel::modifyColumn(int contentID, int column, const QString &credential) {
+//     if (column < 2 || column > 4 || contentID >= m_list.size()) {
+//         return;
+//     }
 
-    for (int i = 0; i < m_list.size(); ++i) {
-        if (m_list[i].content_id == contentID) {
-            switch(column) {
-            case 2:
-                m_list[i][column].org_name = credential;
-                const QString role = OrganizationRole;
-            case 3:
-                m_list[i][column].username = credential;
-                const QString role = UsernameRole;
-            case 4:
-                m_list[i][column].password = credential;
-                const QString role = PasswordRole;
-            default:
-                return;
-            }
+//     for (int i = 0; i < m_list.size(); ++i) {
+//         if (m_list[i].content_id == contentID) {
+//             switch(column) {
+//             case 2:
+//                 m_list[i][column].org_name = credential;
+//                 const QString role = OrganizationRole;
+//             case 3:
+//                 m_list[i][column].username = credential;
+//                 const QString role = UsernameRole;
+//             case 4:
+//                 m_list[i][column].password = credential;
+//                 const QString role = PasswordRole;
+//             default:
+//                 return;
+//             }
 
-            QModelIndex modelIndex = createIndex(i, 0);
-            emit dataChanged(modelIndex, modelIndex, {role})
-        }
-    }
-}
+//             QModelIndex modelIndex = createIndex(i, 0);
+//             emit dataChanged(modelIndex, modelIndex, {role})
+//         }
+//     }
+// }
 
 QVariant CredentialModel::data(const QModelIndex &index, int role) const {
     if (!index.isValid() || index.row() < 0 || index.row() >= m_list.size()) return QVariant();

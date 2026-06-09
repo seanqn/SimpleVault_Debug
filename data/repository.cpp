@@ -70,41 +70,30 @@ bool Repository::removeGroup(int index, int groupID) {
 
 // lambda effectively passes a template type Mapping object to the required paramater
 // need to optimize this method for map cache
-// QList<Credential> Repository::fetchCredentials(int groupID) {
-//     if (m_credentialCache.isEmpty()) {
-//         QList<Credential> m_credentialCache = m_db->fetchRecords<Credential>(
-//             "vault_content",
-//             {"group_id", "content_id", "org_name", "username", "password"},
-//             [](auto mapper) {
-//                 Credential c;
-//                 c.group_id = mapper("group_id").toInt();
-//                 c.content_id = mapper("content_id").toInt();
-//                 c.org_name = mapper("org_name").toString();
-//                 c.username = mapper("username").toString();
-//                 c.password = mapper("password").toString();
-//                 return c;
-//             },
-//             "WHERE group_id = :groupID",
-//             {{":groupID", groupID}}
-//             );
+bool Repository::fetchCredentials(int groupID) {
+    if (m_credentialCache.isEmpty()) {
+        return false;
+    }
 
-//         emit cacheFilled();
-//         return m_credentialCache;
-//     }
+    QList<Credential> m_credentialCache = m_db->fetchRecords<Credential>(
+        "vault_content",
+        {"group_id", "content_id", "org_name", "username", "password"},
+        [](auto mapper) {
+            Credential c;
+            c.group_id = mapper("group_id").toInt();
+            c.content_id = mapper("content_id").toInt();
+            c.org_name = mapper("org_name").toString();
+            c.username = mapper("username").toString();
+            c.password = mapper("password").toString();
+            return c;
+        },
+        "WHERE group_id = :groupID",
+        {{":groupID", groupID}}
+        );
 
-//     return m_credentialCache;
-// }
-
-// bool Repository::addCredential(int groupID, Credential &credential) {
-//     // QString encryptedPasword = encrypt(credential.password);
-
-//     // int new_id = m_db->insertCredential(credential.username, encryptedPassword, credential.group_id);
-//     // credential.content_id = new_id;
-
-//     m_credentialCache.insert(groupID, credential);
-
-//     emit credentialEntryAdded(m_credentialCache.size() - 1);
-// }
+    emit credentialCacheFilled(m_credentialCache);
+    return true;
+}
 
 // called when previously filled credentials are left blank or removed
 void Repository::removeCredential(Credential &credential) {

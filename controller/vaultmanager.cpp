@@ -20,6 +20,7 @@ VaultManager::VaultManager(QObject *parent, const QString &databaseName)
     connect(m_repository, &Repository::groupEntryRemoved, m_groupsModel, &GroupsModel::remove);
     connect(m_repository, &Repository::groupEntryRenamed, m_groupsModel, &GroupsModel::rename);
 
+    connect(this, &VaultManager::credentialRowAdded, m_credentialModel, &CredentialModel::appendRow);
     // connect(m_repository, &Repository::credentialRowAdded, m_credentialModel, &CredentialModel::appendRow);
     // connect(m_repository, &Repository::credentialRowRemoved, m_credentialModel, &CredentialModel::removeRow);
     // connect(m_repository, &Repository::credentialColumnModified, m_credentialModel, &CredentialModel::modifyColumn);
@@ -72,8 +73,15 @@ void VaultManager::renameGroup(int groupID, const QString &newName) {
 void VaultManager::removeGroup(int index, int groupID) {
     if (m_repository->removeGroup(index, groupID)) {
         emit groupRemoved(groupID);
+        m_currentGroupID = 0;
+        emit groupChanged();
         return;
     }
 
     emit groupRemoveError(groupID);
+}
+
+// credential model management methods
+void VaultManager::addCredentialRow() {
+    emit credentialRowAdded();
 }

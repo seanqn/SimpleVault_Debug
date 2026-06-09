@@ -26,7 +26,7 @@ public:
     bool removeGroup(int index, int groupID);
 
     bool fetchCredentials(int groupID);
-    bool addCredential(int groupID, Credential &credential);
+    bool addCredential(int groupID);
     void removeCredential(Credential &credential);
     void removeCredentialRow(int contentID);
 
@@ -35,8 +35,9 @@ signals:
     void groupEntryRemoved(int index);
     void groupEntryRenamed(int index, const QString &name);
     void groupCacheFilled(QList<Group> &cache);
-    void credentialEntryAdded(int index);
-    void credentialEntryRemoved(int index);
+    void credentialCacheFilled(QList<Credential> &cache);
+    void credentialRowAdded();
+    void credentialRowRemoved(int index);
 
 private:
     DB_LocalStorage *m_db;

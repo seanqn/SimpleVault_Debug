@@ -37,6 +37,7 @@ public:
     /* modify includes removing, renaming, or assigning a credential to a credential row
     (technically reassigned to the corresponding Credential struct member, equivalent to adding a new column value row)
     */
+    Q_INVOKABLE void addCredentialRow();
     // Q_INVOKABLE void modifyCredential();
     // Q_INVOKABLE void removeCredentialRow();
     Q_INVOKABLE int getCurrentContentID() const { return m_currentContentID; }
@@ -56,6 +57,7 @@ signals:
     // void credentialAdded();
     // void createCredentialsError();
     // void credentialsUpdateError();
+    void credentialRowAdded();
     void credentialRowChanged();
     // void credentialModified();
     // void credentialRowRemoveError();

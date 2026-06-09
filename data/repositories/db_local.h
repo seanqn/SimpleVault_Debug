@@ -26,7 +26,13 @@ public:
 
     // read operations specifically called by VaultManager to update the models
     template <typename T, typename Mapping>
-    QList<T> fetchRecords(const QString &table, const QStringList &columns, Mapping mapper);
+    QList<T> fetchRecords(
+        const QString &table,
+        const QStringList &columns,
+        Mapping mapper,
+        const QString &condition = QString(),
+        const QVariantMap &bindings = QVariantMap()
+        );
 
 signals:
     void initDBFailure(const QSqlError& error);
@@ -59,8 +65,8 @@ QList<T> DB_LocalStorage::fetchRecords(
     const QString &table,
     const QStringList &columns,
     Mapping mapper,
-    const QString &condition = QString(),
-    const QVariantMap &bindings = QVariantMap()
+    const QString &condition,
+    const QVariantMap &bindings
     ) {
 
     QList<T> values;

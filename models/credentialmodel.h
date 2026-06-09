@@ -24,9 +24,9 @@ public:
 
 public slots:
     void update(const QList<Credential> &credentials);
-    void appendRow(Credential &row);
-    void removeRow(int contentID);
-    void modifyColumn(int contentID, int column, const QString &credential);
+    void appendRow();
+    // void removeRow(int contentID);
+    // void modifyColumn(int contentID, int column, const QString &credential);
 
 private:
     QList<Credential> m_list;
