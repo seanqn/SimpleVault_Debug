@@ -4,8 +4,6 @@
 #include <QAbstractListModel>
 #include "data/credentialtypes.h"
 
-// models are passed via QML property macros in the controller class
-// note that this and the GroupsModel class previously used QML_ANONYMOUS but was creating some redundancies this way
 class CredentialModel : public QAbstractListModel {
     Q_OBJECT
 

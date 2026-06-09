@@ -42,7 +42,7 @@ bool Repository::fetchGroups() {
         }
     );
 
-    emit groupCacheFilled(m_groupCache);
+    emit groupCacheUpdated(m_groupCache);
     return true;
 }
 
@@ -91,7 +91,7 @@ bool Repository::fetchCredentials(int groupID) {
         {{":groupID", groupID}}
         );
 
-    emit credentialCacheFilled(m_credentialCache);
+    emit credentialCacheUpdated(m_credentialCache);
     return true;
 }
 

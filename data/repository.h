@@ -34,8 +34,8 @@ signals:
     void groupEntryAdded(Group &group);
     void groupEntryRemoved(int index);
     void groupEntryRenamed(int index, const QString &name);
-    void groupCacheFilled(QList<Group> &cache);
-    void credentialCacheFilled(QList<Credential> &cache);
+    void groupCacheUpdated(QList<Group> &cache);
+    void credentialCacheUpdated(QList<Credential> &cache);
     void credentialRowAdded();
     void credentialRowRemoved(int index);
 

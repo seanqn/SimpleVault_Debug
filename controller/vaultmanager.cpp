@@ -16,10 +16,12 @@ VaultManager::VaultManager(QObject *parent, const QString &databaseName)
 
     initRepository();
 
+    connect(m_repository, &Repository::groupCacheUpdated, m_groupsModel, &GroupsModel::update);
     connect(m_repository, &Repository::groupEntryAdded, m_groupsModel, &GroupsModel::append);
     connect(m_repository, &Repository::groupEntryRemoved, m_groupsModel, &GroupsModel::remove);
     connect(m_repository, &Repository::groupEntryRenamed, m_groupsModel, &GroupsModel::rename);
 
+    connect(m_repository, &Repository::credentialCacheUpdated, m_credentialModel, &CredentialModel::update);
     connect(this, &VaultManager::credentialRowAdded, m_credentialModel, &CredentialModel::appendRow);
     // connect(m_repository, &Repository::credentialRowAdded, m_credentialModel, &CredentialModel::appendRow);
     // connect(m_repository, &Repository::credentialRowRemoved, m_credentialModel, &CredentialModel::removeRow);

@@ -17,9 +17,9 @@ public:
     QHash<int, QByteArray> roleNames() const override;
     QVariant data(const QModelIndex &index, int role=Qt::DisplayRole) const override;
     int rowCount(const QModelIndex &parent = QModelIndex()) const override { return m_list.size(); }
-    void update(QList<Group> &groups);
 
 public slots:
+    void update(QList<Group> &groups);
     void append(Group &group);
     void rename(int id, const QString &name);
     void remove(int index);

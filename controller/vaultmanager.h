@@ -17,11 +17,14 @@ class VaultManager : public QObject {
     Q_PROPERTY(GroupsModel* groupsModel READ groupsModel CONSTANT)
     Q_PROPERTY(int getCurrentGroupID READ getCurrentGroupID NOTIFY groupChanged)
     Q_PROPERTY(int getCurrentContentID READ getCurrentContentID NOTIFY credentialRowChanged)
+    // Q_PROPERTY(int getCredentialRowCount READ getCredentialRowCount)
+
 
 public:
     explicit VaultManager(QObject* parent = nullptr, const QString &databaseName="SimpleVault");
     GroupsModel* groupsModel() const { return m_groupsModel; }
     CredentialModel* credentialModel() const { return m_credentialModel; }
+    // int getCredentialRowCount() { return m_credentialModel->rowCount(); }
     void initRepository();
     void updateGroups();
     void updateCredentials();
