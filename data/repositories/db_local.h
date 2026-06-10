@@ -21,7 +21,14 @@ public:
     QString fetchGroupName(int groupID);
     bool renameGroup(int groupID, const QString &newGroupName);
     bool removeGroup(int groupID);
-    bool addVaultRowEntry(int currGroupID, const QString &organizationName, const QString &username, const QString &pass);
+    bool addVaultRowEntry(
+        int currGroupID,
+        const QString &organizationName,
+        const QString &username,
+        const QString &pass,
+        const QString &email,
+        const QString &note
+        );
     bool isDBConnected();
 
     // read operations specifically called by VaultManager to update the models

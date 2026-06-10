@@ -21,6 +21,11 @@ void CredentialModel::update(const QList<Credential> &credentials) {
 void CredentialModel::appendRow() {
     beginInsertRows(QModelIndex(), m_list.size(), m_list.size());
     Credential tmpRow;
+    tmpRow.org_name = "Organization";
+    tmpRow.username = "Username";
+    tmpRow.password = "Password";
+    tmpRow.email = "Email";
+    tmpRow.note = "Add. Notes";
     m_list.append(tmpRow);
     endInsertRows();
 }
@@ -64,6 +69,10 @@ QVariant CredentialModel::data(const QModelIndex &index, int role) const {
         return credential.username;
     case PasswordRole:
         return credential.password;
+    case EmailRole:
+        return credential.email;
+    case NoteRole:
+        return credential.note;
     default:
         return QVariant();
     }
@@ -74,5 +83,7 @@ QHash<int, QByteArray> CredentialModel::roleNames() const {
     roles[OrganizationRole] = "org_name";
     roles[UsernameRole] = "username";
     roles[PasswordRole] = "password";
+    roles[EmailRole] = "email";
+    roles[NoteRole] = "note";
     return roles;
 }

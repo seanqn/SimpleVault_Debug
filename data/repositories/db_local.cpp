@@ -78,6 +78,8 @@ bool DB_LocalStorage::initDB() {
                    "org_name TEXT, "
                    "username TEXT, "
                    "password TEXT NOT NULL, "
+                   "email TEXT, "
+                   "note TEXT, "
                    "FOREIGN KEY(group_id) REFERENCES groups(id) ON DELETE CASCADE)");
 
 
@@ -164,13 +166,22 @@ bool DB_LocalStorage::removeGroup(int groupID) {
     return true;
 }
 
-bool DB_LocalStorage::addVaultRowEntry(int currGroupID, const QString &organizationName, const QString &username, const QString &pass) {
+bool DB_LocalStorage::addVaultRowEntry(
+    int currGroupID,
+    const QString &organizationName,
+    const QString &username,
+    const QString &pass,
+    const QString &email,
+    const QString &note
+    ) {
     QSqlQuery _query(_db);
-    _query.prepare("INSERT INTO vault_content (group_id, org_name, username, password) VALUES (:gid, :org, :usr, :pw)");
+    _query.prepare("INSERT INTO vault_content (group_id, org_name, username, password, email, note) VALUES (:gid, :org, :usr, :pw, :eml, :nte)");
     _query.bindValue(":gid", currGroupID);
     _query.bindValue(":org", organizationName);
     _query.bindValue(":usr", username);
     _query.bindValue(":pw", pass);
+    _query.bindValue(":eml", email);
+    _query.bindValue(":nte", note);
     if (!_query.exec()) {
         emit databaseQueryError(_query.lastError());
         return false;

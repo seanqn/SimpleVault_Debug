@@ -19,6 +19,8 @@ public:
     QString org_name;
     QString username;
     QString password;
+    QString email;
+    QString note;
 };
 
 // Q_DECLARE_METATYPE(Credential)

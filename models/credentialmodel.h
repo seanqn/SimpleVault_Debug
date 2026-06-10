@@ -12,11 +12,15 @@ public:
     enum CredentialRoles {
         OrganizationRole,
         UsernameRole,
-        PasswordRole
+        PasswordRole,
+        EmailRole,
+        NoteRole
     };
     QHash<int, QByteArray> roleNames() const override;
     QVariant data(const QModelIndex &index, int role) const override;
     int rowCount(const QModelIndex &parent = QModelIndex()) const override { return m_list.size(); }
+    // columnCount expects reference to a parent but it is unused, no argument required
+    int columnCount(const QModelIndex&) const override { return 5; }
 
 public slots:
     void update(const QList<Credential> &credentials);

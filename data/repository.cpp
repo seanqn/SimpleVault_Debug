@@ -82,6 +82,7 @@ bool Repository::fetchCredentials(int groupID) {
             c.org_name = mapper("org_name").toString();
             c.username = mapper("username").toString();
             c.password = mapper("password").toString();
+            c.email = mapper("email").toString();
             return c;
         },
         "WHERE group_id = :groupID",
