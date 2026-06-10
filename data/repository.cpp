@@ -69,7 +69,6 @@ bool Repository::removeGroup(int index, int groupID) {
 }
 
 // lambda effectively passes a template type Mapping object to the required paramater
-// need to optimize this method for map cache
 bool Repository::fetchCredentials(int groupID) {
     if (m_credentialCache.isEmpty()) {
         return false;
@@ -77,11 +76,9 @@ bool Repository::fetchCredentials(int groupID) {
 
     QList<Credential> m_credentialCache = m_db->fetchRecords<Credential>(
         "vault_content",
-        {"group_id", "content_id", "org_name", "username", "password"},
+        {"org_name", "username", "password"},
         [](auto mapper) {
             Credential c;
-            c.group_id = mapper("group_id").toInt();
-            c.content_id = mapper("content_id").toInt();
             c.org_name = mapper("org_name").toString();
             c.username = mapper("username").toString();
             c.password = mapper("password").toString();
