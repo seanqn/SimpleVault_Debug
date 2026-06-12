@@ -7,10 +7,31 @@ Repository::Repository(QObject *parent, const QString &databaseName)
     m_db = new DB_LocalStorage(this, databaseName);
 }
 
+// emitted repository signals have listening slots in the model classes, and is how the models are being updated
+
 // TODO: encryption/decryption, refactor database methods to reflect repository implementation
 
 bool Repository::initDatabase() {
     return m_db->initDB();
+}
+
+// adds mock credential row to test fetching
+void Repository::mockCredentialRow() {
+    // group id, organization, username, pasword, email, additional optional notes
+    bool mockAdded = m_db->addVaultRowEntry(
+        1,
+        "mock_organization",
+        "mock_username",
+        "mock_password",
+        "mock_email",
+        "mock_note"
+    );
+    if (mockAdded) {
+        qDebug() << "[repository]: mock credential row was added to database";
+        return;
+    }
+
+    qDebug() << "[repository]: error adding mock credential row to database";
 }
 
 bool Repository::addGroup(const QString &groupName) {
@@ -25,11 +46,7 @@ bool Repository::addGroup(const QString &groupName) {
 }
 
 // the only method where the cache is implemented is for the purpose of overwriting the group model's internal list
-bool Repository::fetchGroups() {
-    if (m_groupCache.isEmpty()) {
-        return false;
-    }
-
+void Repository::fetchGroups() {
     m_groupCache = m_db->fetchRecords<Group>(
         "groups",
         {"id", "name", "created_at"},
@@ -42,8 +59,12 @@ bool Repository::fetchGroups() {
         }
     );
 
+    if (m_groupCache.isEmpty()) {
+        emit groupCacheEmpty();
+        return;
+    }
+
     emit groupCacheUpdated(m_groupCache);
-    return true;
 }
 
 bool Repository::renameGroup(int groupID, const QString &newName) {
@@ -57,9 +78,7 @@ bool Repository::renameGroup(int groupID, const QString &newName) {
 
 // based on the foreign key groups id = vault_content group_id, removal of a group is expected to cascade to all associated credentials
 // requires a return that is passed along to the controller to update the groups model
-// also requires that the credential cache is updated to reflect the credentials removed in that group
 bool Repository::removeGroup(int index, int groupID) {
-    // the group id removes the group from the database, the passed index is corresponds to the group at the cache's index to remove
     if (m_db->removeGroup(groupID)) {
         emit groupEntryRemoved(index);
         return true;
@@ -69,11 +88,7 @@ bool Repository::removeGroup(int index, int groupID) {
 }
 
 // lambda effectively passes a template type Mapping object to the required paramater
-bool Repository::fetchCredentials(int groupID) {
-    if (m_credentialCache.isEmpty()) {
-        return false;
-    }
-
+void Repository::fetchCredentials(int groupID) {
     QList<Credential> m_credentialCache = m_db->fetchRecords<Credential>(
         "vault_content",
         {"org_name", "username", "password"},
@@ -83,14 +98,18 @@ bool Repository::fetchCredentials(int groupID) {
             c.username = mapper("username").toString();
             c.password = mapper("password").toString();
             c.email = mapper("email").toString();
+            c.note = mapper("note").toString();
             return c;
         },
         "WHERE group_id = :groupID",
         {{":groupID", groupID}}
         );
 
+    if (m_credentialCache.isEmpty()) {
+        emit credentialCacheEmpty();
+    }
+
     emit credentialCacheUpdated(m_credentialCache);
-    return true;
 }
 
 // called when previously filled credentials are left blank or removed

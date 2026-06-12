@@ -16,6 +16,9 @@ VaultManager::VaultManager(QObject *parent, const QString &databaseName)
 
     initRepository();
 
+    connect(m_repository, &Repository::groupCacheEmpty, this, &VaultManager::repositoryGroupCacheEmpty);
+    connect(m_repository, &Repository::credentialCacheEmpty, this, &VaultManager::repositoryCredentialCacheEmpty);
+
     connect(m_repository, &Repository::groupCacheUpdated, m_groupsModel, &GroupsModel::update);
     connect(m_repository, &Repository::groupEntryAdded, m_groupsModel, &GroupsModel::append);
     connect(m_repository, &Repository::groupEntryRemoved, m_groupsModel, &GroupsModel::remove);
@@ -28,6 +31,7 @@ VaultManager::VaultManager(QObject *parent, const QString &databaseName)
     // connect(m_repository, &Repository::credentialColumnModified, m_credentialModel, &CredentialModel::modifyColumn);
 
     updateGroups();
+    m_repository->mockCredentialRow();
 }
 
 void VaultManager::initRepository() {
@@ -36,11 +40,7 @@ void VaultManager::initRepository() {
 
 // ideally should only be called by the constructor and other members
 void VaultManager::updateGroups() {
-    if (m_repository->fetchGroups()) {
-        return;
-    }
-
-    emit groupsUpdateError();
+    m_repository->fetchGroups();
 }
 
 // database write entry is added to database and only appended to the cache
@@ -54,11 +54,10 @@ void VaultManager::createGroup(const QString &name) {
 }
 
 void VaultManager::selectGroup(int groupID) {
+    // seems to be some discrepancy between actual group id in the db table and autoincremented model IDRole values
+    m_repository->fetchCredentials(groupID);
     m_currentGroupID = groupID;
-    emit groupChanged();
-    if (m_repository->fetchCredentials(groupID)) {
-        return;
-    }
+    emit groupChanged(m_currentGroupID);
 }
 
 // rename will be selected via a right-click context menu option, which is not necessarily reflective of the current (double-click selected) group id
@@ -76,7 +75,7 @@ void VaultManager::removeGroup(int index, int groupID) {
     if (m_repository->removeGroup(index, groupID)) {
         emit groupRemoved(groupID);
         m_currentGroupID = 0;
-        emit groupChanged();
+        emit groupChanged(m_currentGroupID);
         return;
     }
 
@@ -86,4 +85,13 @@ void VaultManager::removeGroup(int index, int groupID) {
 // credential model management methods
 void VaultManager::addCredentialRow() {
     emit credentialRowAdded();
+}
+
+// slot functions
+void VaultManager::repositoryGroupCacheEmpty() {
+    emit groupsUpdated("Groups cache empty");
+}
+
+void VaultManager::repositoryCredentialCacheEmpty() {
+    emit credentialsUpdated("Credential cache empty");
 }

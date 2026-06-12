@@ -10,7 +10,7 @@ class GroupsModel : public QAbstractListModel {
 public:
     explicit GroupsModel(QObject *parent = nullptr);
     enum GroupRoles {
-        IDRole = Qt::UserRole + 1,
+        IDRole = Qt::UserRole,
         GroupNameRole,
         CreatedAtRole
     };

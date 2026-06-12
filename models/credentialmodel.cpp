@@ -21,11 +21,6 @@ void CredentialModel::update(const QList<Credential> &credentials) {
 void CredentialModel::appendRow() {
     beginInsertRows(QModelIndex(), m_list.size(), m_list.size());
     Credential tmpRow;
-    tmpRow.org_name = "Organization";
-    tmpRow.username = "Username";
-    tmpRow.password = "Password";
-    tmpRow.email = "Email";
-    tmpRow.note = "Add. Notes";
     m_list.append(tmpRow);
     endInsertRows();
 }

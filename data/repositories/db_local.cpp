@@ -73,7 +73,7 @@ bool DB_LocalStorage::initDB() {
                    "created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
     // vault_content table
     _query.exec("CREATE TABLE IF NOT EXISTS vault_content ( "
-                   "group_id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                   "group_id INTEGER, "
                    "content_id INTEGER PRIMARY KEY AUTOINCREMENT, "
                    "org_name TEXT, "
                    "username TEXT, "
@@ -183,6 +183,7 @@ bool DB_LocalStorage::addVaultRowEntry(
     _query.bindValue(":eml", email);
     _query.bindValue(":nte", note);
     if (!_query.exec()) {
+        qDebug() << _query.lastError();
         emit databaseQueryError(_query.lastError());
         return false;
     }

@@ -19,18 +19,21 @@ public:
     // Group getGroupAt(int index) const { return m_groupCache[index]; }
     // Credential getCredentialRowAt(int index) const { return m_credentialCache.value(index); }
 
+    void mockCredentialRow();
+
     bool initDatabase();
     bool addGroup(const QString &groupName);
-    bool fetchGroups();
+    void fetchGroups();
     bool renameGroup(int groupID, const QString &newName);
     bool removeGroup(int index, int groupID);
 
-    bool fetchCredentials(int groupID);
+    void fetchCredentials(int groupID);
     bool addCredential(int groupID);
     void removeCredential(Credential &credential);
     void removeCredentialRow(int contentID);
 
 signals:
+    // to models only
     void groupEntryAdded(Group &group);
     void groupEntryRemoved(int index);
     void groupEntryRenamed(int index, const QString &name);
@@ -38,6 +41,10 @@ signals:
     void credentialCacheUpdated(QList<Credential> &cache);
     void credentialRowAdded();
     void credentialRowRemoved(int index);
+
+    // to controller only
+    void groupCacheEmpty();
+    void credentialCacheEmpty();
 
 private:
     DB_LocalStorage *m_db;

@@ -19,7 +19,6 @@ class VaultManager : public QObject {
     Q_PROPERTY(int getCurrentContentID READ getCurrentContentID NOTIFY credentialRowChanged)
     // Q_PROPERTY(int getCredentialRowCount READ getCredentialRowCount)
 
-
 public:
     explicit VaultManager(QObject* parent = nullptr, const QString &databaseName="SimpleVault");
     GroupsModel* groupsModel() const { return m_groupsModel; }
@@ -50,8 +49,8 @@ signals:
 
     void groupAdded();
     void createGroupError();
-    void groupsUpdateError();
-    void groupChanged();
+    void groupsUpdated(const QString &msg);
+    void groupChanged(int id);
     void groupRenamed(const QString &name);
     void groupRenameError();
     void groupRemoved(int id);
@@ -59,11 +58,16 @@ signals:
 
     // void credentialAdded();
     // void createCredentialsError();
-    // void credentialsUpdateError();
+    void credentialsUpdated(const QString &msg);
     void credentialRowAdded();
     void credentialRowChanged();
     // void credentialModified();
     // void credentialRowRemoveError();
+
+public slots:
+    void repositoryGroupCacheEmpty();
+    void repositoryCredentialCacheEmpty();
+
 
 private:
     GroupsModel* m_groupsModel;
