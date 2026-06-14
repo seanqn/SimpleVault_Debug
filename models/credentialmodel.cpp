@@ -18,11 +18,27 @@ void CredentialModel::update(const QList<Credential> &credentials) {
     endResetModel();
 }
 
-void CredentialModel::appendRow() {
+void CredentialModel::appendRow(const Credential &row = Credential()) {
     beginInsertRows(QModelIndex(), m_list.size(), m_list.size());
-    Credential tmpRow;
-    m_list.append(tmpRow);
+    m_list.append(row);
     endInsertRows();
+}
+
+void CredentialModel::upsert(Credential &credential, int upsertMethod) {
+    if (upsertMethod == 0) {
+        appendRow(credential);
+        return;
+    }
+
+    for (int i = 0; i < m_list.size(); ++i) {
+        if (m_list[i].content_id == credential.content_id) {
+            m_list[i] = credential;
+            QModelIndex modelIndex = createIndex(i, 0);
+            // third argument left as empty vector to signify (potentially) all roles have changed
+            emit dataChanged(modelIndex, modelIndex, {});
+            return;
+        }
+    }
 }
 
 // void CredentialModel::modifyColumn(int contentID, int column, const QString &credential) {
@@ -58,6 +74,8 @@ QVariant CredentialModel::data(const QModelIndex &index, int role) const {
     const Credential &credential = m_list.at(index.row());
 
     switch (role) {
+    case ContentIDRole:
+        return credential.content_id;
     case OrganizationRole:
         return credential.org_name;
     case UsernameRole:
@@ -75,6 +93,7 @@ QVariant CredentialModel::data(const QModelIndex &index, int role) const {
 
 QHash<int, QByteArray> CredentialModel::roleNames() const {
     QHash<int, QByteArray> roles;
+    roles[ContentIDRole] = "content_id";
     roles[OrganizationRole] = "org_name";
     roles[UsernameRole] = "username";
     roles[PasswordRole] = "password";

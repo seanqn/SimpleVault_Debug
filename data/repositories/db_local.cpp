@@ -99,6 +99,8 @@ void DB_LocalStorage::closeDB() {
     emit closeDBConnectionSuccess();
 }
 
+// group methods
+
 Group DB_LocalStorage::addGroup(const QString &groupName) {
     Group newGroup;
     if (!m_connected || !_db.isOpen()) {
@@ -166,8 +168,12 @@ bool DB_LocalStorage::removeGroup(int groupID) {
     return true;
 }
 
-bool DB_LocalStorage::addVaultRowEntry(
+// vault content (credential) methods
+
+// TODO: needs to either update the content id of the model or have a value reflective of the content id passed in
+Credential DB_LocalStorage::upsertVaultRowEntry(
     int currGroupID,
+    int contentID,
     const QString &organizationName,
     const QString &username,
     const QString &pass,
@@ -175,20 +181,44 @@ bool DB_LocalStorage::addVaultRowEntry(
     const QString &note
     ) {
     QSqlQuery _query(_db);
-    _query.prepare("INSERT INTO vault_content (group_id, org_name, username, password, email, note) VALUES (:gid, :org, :usr, :pw, :eml, :nte)");
+    bool insert = (contentID <= 0);
+
+    if (insert) {
+        _query.prepare("INSERT INTO vault_content (group_id, org_name, username, password, email, note) "
+                       "VALUES (:gid, :org, :usr, :pw, :eml, :nte)");
+    }
+    else {
+        _query.prepare("UPDATE vault_content SET "
+                       "organization = :org, "
+                       "username = :usr, "
+                       "password = :pw, "
+                       "email = :eml, "
+                       "note = :nte "
+                       "WHERE group_id = :gid AND content_id = :contentID");
+        _query.bindValue(":contentID", contentID);
+    }
+
     _query.bindValue(":gid", currGroupID);
     _query.bindValue(":org", organizationName);
     _query.bindValue(":usr", username);
     _query.bindValue(":pw", pass);
     _query.bindValue(":eml", email);
     _query.bindValue(":nte", note);
+
+    Credential row;
+
     if (!_query.exec()) {
-        qDebug() << _query.lastError();
-        emit databaseQueryError(_query.lastError());
-        return false;
+        qDebug() << "db::upsertVaultRowEntry: " << _query.lastError();
+        row.content_id = -1;
+        return row;
     }
 
-    emit databaseQuerySuccess();
-    return true;
+    row.content_id = insert ? _query.lastInsertId().toInt() : contentID;
+    row.org_name = organizationName;
+    row.username = username;
+    row.password = pass;
+    row.email = email;
+    row.note = note;
+    return row;
 }
 

@@ -23,10 +23,8 @@ public:
     explicit VaultManager(QObject* parent = nullptr, const QString &databaseName="SimpleVault");
     GroupsModel* groupsModel() const { return m_groupsModel; }
     CredentialModel* credentialModel() const { return m_credentialModel; }
-    // int getCredentialRowCount() { return m_credentialModel->rowCount(); }
     void initRepository();
     void updateGroups();
-    void updateCredentials();
 
     Q_INVOKABLE void createGroup(const QString &name);
     Q_INVOKABLE void selectGroup(int groupID);
@@ -40,7 +38,7 @@ public:
     (technically reassigned to the corresponding Credential struct member, equivalent to adding a new column value row)
     */
     Q_INVOKABLE void addCredentialRow();
-    // Q_INVOKABLE void modifyCredential();
+    Q_INVOKABLE void upsertCredentialRow(int groupID, Credential &credential);
     // Q_INVOKABLE void removeCredentialRow();
     Q_INVOKABLE int getCurrentContentID() const { return m_currentContentID; }
 
@@ -59,7 +57,8 @@ signals:
     // void credentialAdded();
     // void createCredentialsError();
     void credentialsUpdated(const QString &msg);
-    void credentialRowAdded();
+    // argument is expected to be default, but matches that of the listening slot
+    void credentialRowAdded(const Credential = Credential());
     void credentialRowChanged();
     // void credentialModified();
     // void credentialRowRemoveError();

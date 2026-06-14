@@ -26,6 +26,7 @@ VaultManager::VaultManager(QObject *parent, const QString &databaseName)
 
     connect(m_repository, &Repository::credentialCacheUpdated, m_credentialModel, &CredentialModel::update);
     connect(this, &VaultManager::credentialRowAdded, m_credentialModel, &CredentialModel::appendRow);
+    connect(m_repository, &Repository::credentialRowUpsert, m_credentialModel, &CredentialModel::upsert);
     // connect(m_repository, &Repository::credentialRowAdded, m_credentialModel, &CredentialModel::appendRow);
     // connect(m_repository, &Repository::credentialRowRemoved, m_credentialModel, &CredentialModel::removeRow);
     // connect(m_repository, &Repository::credentialColumnModified, m_credentialModel, &CredentialModel::modifyColumn);
@@ -37,6 +38,8 @@ VaultManager::VaultManager(QObject *parent, const QString &databaseName)
 void VaultManager::initRepository() {
     if (!m_repository->initDatabase()) emit repositoryInitializationError();
 }
+
+// groups model management methods
 
 // ideally should only be called by the constructor and other members
 void VaultManager::updateGroups() {
@@ -84,7 +87,12 @@ void VaultManager::removeGroup(int index, int groupID) {
 
 // credential model management methods
 void VaultManager::addCredentialRow() {
-    emit credentialRowAdded();
+    emit credentialRowAdded(Credential());
+}
+
+void VaultManager::upsertCredentialRow(int groupID, Credential &credential) {
+    // call repository method
+    m_repository->upsertCredentialRow(groupID, credential);
 }
 
 // slot functions

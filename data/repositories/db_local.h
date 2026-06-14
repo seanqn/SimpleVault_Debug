@@ -21,8 +21,9 @@ public:
     QString fetchGroupName(int groupID);
     bool renameGroup(int groupID, const QString &newGroupName);
     bool removeGroup(int groupID);
-    bool addVaultRowEntry(
+    Credential upsertVaultRowEntry(
         int currGroupID,
+        int contentID,
         const QString &organizationName,
         const QString &username,
         const QString &pass,
@@ -129,30 +130,5 @@ QList<T> DB_LocalStorage::fetchRecords(
 
     return values;
 }
-
-// this needs to be tested
-// saved method for potential to correspond logic with fetchCredentisl() logic
-
-// template <typename Mapping>
-// Group DB_LocalStorage::fetchGroups(Mapping mapper) {
-//     Group group;
-//     QSqlQuery _query(_db);
-//     _query.prepare("SELECT id, name, created_at FROM groups WHERE id = :currGroupID");
-//     _query.bindValue(":currGroupID", currGroupID);
-
-//     if (!_query.exec()) {
-//         emit databaseQueryError(_query.lastError());
-//         return group;
-//     }
-
-//     QSqlRecord = _query.record;
-
-//     auto rowMapper = mapper(record);
-//     while (_query.next()) {
-//         group.append(rowMapper(_query));
-//     }
-
-//     return group;
-// }
 
 #endif // DB_LOCAL_H

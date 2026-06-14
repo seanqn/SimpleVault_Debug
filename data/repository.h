@@ -28,7 +28,7 @@ public:
     bool removeGroup(int index, int groupID);
 
     void fetchCredentials(int groupID);
-    bool addCredential(int groupID);
+    void upsertCredentialRow(int groupID, Credential &credential);
     void removeCredential(Credential &credential);
     void removeCredentialRow(int contentID);
 
@@ -38,8 +38,10 @@ signals:
     void groupEntryRemoved(int index);
     void groupEntryRenamed(int index, const QString &name);
     void groupCacheUpdated(QList<Group> &cache);
+
     void credentialCacheUpdated(QList<Credential> &cache);
     void credentialRowAdded();
+    void credentialRowUpsert(Credential &credential, int upsertMethod);
     void credentialRowRemoved(int index);
 
     // to controller only

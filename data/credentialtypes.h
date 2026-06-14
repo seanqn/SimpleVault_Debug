@@ -14,6 +14,7 @@ public:
 
 struct Credential {
 public:
+    int content_id = 0;
     QString org_name;
     QString username;
     QString password;

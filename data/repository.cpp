@@ -18,20 +18,10 @@ bool Repository::initDatabase() {
 // adds mock credential row to test fetching
 void Repository::mockCredentialRow() {
     // group id, organization, username, pasword, email, additional optional notes
-    bool mockAdded = m_db->addVaultRowEntry(
-        1,
-        "mock_organization",
-        "mock_username",
-        "mock_password",
-        "mock_email",
-        "mock_note"
-    );
-    if (mockAdded) {
-        qDebug() << "[repository]: mock credential row was added to database";
-        return;
-    }
-
-    qDebug() << "[repository]: error adding mock credential row to database";
+    int groupID = 1;
+    int contentID = 0;
+    Credential mockRow = {contentID, "mock_organization", "mock_username", "mock_password", "mock_email", "mock_note"};
+    upsertCredentialRow(groupID, mockRow);
 }
 
 bool Repository::addGroup(const QString &groupName) {
@@ -110,6 +100,36 @@ void Repository::fetchCredentials(int groupID) {
     }
 
     emit credentialCacheUpdated(m_credentialCache);
+}
+
+void Repository::upsertCredentialRow(int groupID, Credential &credential) {
+    // if the contentID is 0 (default) then it is a new row, primaryKey is the updated content id passed to the model
+    // otherwise, the content id already exists in the table and the row is instead updated
+    Credential upsertedRow = m_db->upsertVaultRowEntry(
+        groupID,
+        credential.content_id,
+        credential.org_name,
+        credential.username,
+        credential.password,
+        credential.email,
+        credential.note
+        );
+
+    if (upsertedRow.content_id < 0) {
+        qDebug() << "[repository]: credential row could not be upserted.";
+        return;
+    }
+
+    if (credential.content_id == 0) {
+        qDebug() << "[repository]: credential row added in group " << groupID << ", content ID: " << upsertedRow.content_id;
+        emit credentialRowUpsert(upsertedRow, 0);
+        return;
+    }
+
+    qDebug() << "[repository]: credential row updated in group " << groupID << ". (content ID [delivered]: "
+             << credential.content_id << ") (content ID [retrieved]: " << upsertedRow.content_id << ")";
+    emit credentialRowUpsert(upsertedRow, 1);
+    return;
 }
 
 // called when previously filled credentials are left blank or removed

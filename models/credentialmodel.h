@@ -10,6 +10,7 @@ class CredentialModel : public QAbstractListModel {
 public:
     explicit CredentialModel(QObject *parent = nullptr);
     enum CredentialRoles {
+        ContentIDRole,
         OrganizationRole,
         UsernameRole,
         PasswordRole,
@@ -24,7 +25,8 @@ public:
 
 public slots:
     void update(const QList<Credential> &credentials);
-    void appendRow();
+    void appendRow(const Credential &row);
+    void upsert(Credential &credential, int upsertMethod);
     // void removeRow(int contentID);
     // void modifyColumn(int contentID, int column, const QString &credential);
 
