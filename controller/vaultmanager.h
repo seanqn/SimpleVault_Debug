@@ -32,15 +32,21 @@ public:
     Q_INVOKABLE void removeGroup(int index, int groupID);
     Q_INVOKABLE int getCurrentGroupID() const { return m_currentGroupID; }
 
-    // Q_INVOKABLE void createCredentialRow();
-
-    /* modify includes removing, renaming, or assigning a credential to a credential row
-    (technically reassigned to the corresponding Credential struct member, equivalent to adding a new column value row)
-    */
-    Q_INVOKABLE void addCredentialRow();
-    Q_INVOKABLE void upsertCredentialRow(int groupID, Credential &credential);
+    // adds empty row, if the row columns contain any default values after editing, the row is deconstructed
+    Q_INVOKABLE void addDefaultCredentialRow();
+    Q_INVOKABLE void selectCredentialRow(Credential &row);
+    // Q_INVOKABLE void upsertCredentialRow(
+    //     const QString &org,
+    //     const QString &user,
+    //     const QString &pass,
+    //     const QString &email,
+    //     const QString &note
+    // );
     // Q_INVOKABLE void removeCredentialRow();
     Q_INVOKABLE int getCurrentContentID() const { return m_currentContentID; }
+    Q_INVOKABLE void startRowEdit(int rowIndex);
+    Q_INVOKABLE void updateRowCacheField(const QString &role, const QString &value);
+    Q_INVOKABLE void submitRow();
 
 signals:
     void repositoryInitializationError();
@@ -54,19 +60,17 @@ signals:
     void groupRemoved(int id);
     void groupRemoveError(int id);
 
-    // void credentialAdded();
     // void createCredentialsError();
     void credentialsUpdated(const QString &msg);
     // argument is expected to be default, but matches that of the listening slot
     void credentialRowAdded(const Credential = Credential());
-    void credentialRowChanged();
-    // void credentialModified();
+    void credentialRowChanged(int id);
+    // void credentialRowRemoved();
     // void credentialRowRemoveError();
 
 public slots:
-    void repositoryGroupCacheEmpty();
-    void repositoryCredentialCacheEmpty();
-
+    void repositoryGroupCacheEmpty() { emit groupsUpdated("Group cache empty"); }
+    void repositoryCredentialCacheEmpty() { emit credentialsUpdated("Credential cache empty"); }
 
 private:
     GroupsModel* m_groupsModel;
@@ -74,6 +78,8 @@ private:
     Repository* m_repository;
     int m_currentGroupID;
     int m_currentContentID;
+    Credential m_rowCache;
+    int m_editRowIndex = -1;
 };
 
 #endif // VAULTMANAGER_H

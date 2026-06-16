@@ -21,15 +21,7 @@ public:
     QString fetchGroupName(int groupID);
     bool renameGroup(int groupID, const QString &newGroupName);
     bool removeGroup(int groupID);
-    Credential upsertVaultRowEntry(
-        int currGroupID,
-        int contentID,
-        const QString &organizationName,
-        const QString &username,
-        const QString &pass,
-        const QString &email,
-        const QString &note
-        );
+    Credential upsertVaultRowEntry(int currGroupID, const Credential &credential);
     bool isDBConnected();
 
     // read operations specifically called by VaultManager to update the models
@@ -40,7 +32,7 @@ public:
         Mapping mapper,
         const QString &condition = QString(),
         const QVariantMap &bindings = QVariantMap()
-        );
+    );
 
 signals:
     void initDBFailure(const QSqlError& error);
@@ -74,9 +66,8 @@ QList<T> DB_LocalStorage::fetchRecords(
     const QStringList &columns,
     Mapping mapper,
     const QString &condition,
-    const QVariantMap &bindings
-    ) {
-
+    const QVariantMap &bindings)
+{
     QList<T> values;
 
     // collect the request and append the condition if necessary

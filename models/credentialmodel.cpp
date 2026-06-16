@@ -3,14 +3,6 @@
 CredentialModel::CredentialModel(QObject *parent)
     : QAbstractListModel(parent) {}
 
-// TODO: move all non-overridden methods to controller
-
-// void CredentialModel::setCredentials(const QList<Credential> &credentials) {
-//     beginResetModel();
-//     m_list = credentials;
-//     endResetModel();
-// }
-
 // refreshes the UI displaying updated credentials
 void CredentialModel::update(const QList<Credential> &credentials) {
     beginResetModel();
@@ -18,21 +10,29 @@ void CredentialModel::update(const QList<Credential> &credentials) {
     endResetModel();
 }
 
-void CredentialModel::appendRow(const Credential &row = Credential()) {
+void CredentialModel::appendRow(const Credential &row) {
     beginInsertRows(QModelIndex(), m_list.size(), m_list.size());
     m_list.append(row);
     endInsertRows();
 }
 
-void CredentialModel::upsert(Credential &credential, int upsertMethod) {
-    if (upsertMethod == 0) {
-        appendRow(credential);
-        return;
+void CredentialModel::syncNewRow(const Credential &row) {
+    for (int i = 0; i < m_list.size(); ++i) {
+        if (m_list[i].content_id == 0) {
+            m_list[i] = row;
+            QModelIndex modelIndex = createIndex(i, 0);
+            emit dataChanged(modelIndex, modelIndex, {});
+            return;
+        }
     }
 
+    appendRow(row);
+}
+
+void CredentialModel::updateRow(const Credential &row) {
     for (int i = 0; i < m_list.size(); ++i) {
-        if (m_list[i].content_id == credential.content_id) {
-            m_list[i] = credential;
+        if (m_list[i].content_id == row.content_id) {
+            m_list[i] = row;
             QModelIndex modelIndex = createIndex(i, 0);
             // third argument left as empty vector to signify (potentially) all roles have changed
             emit dataChanged(modelIndex, modelIndex, {});
@@ -41,32 +41,15 @@ void CredentialModel::upsert(Credential &credential, int upsertMethod) {
     }
 }
 
-// void CredentialModel::modifyColumn(int contentID, int column, const QString &credential) {
-//     if (column < 2 || column > 4 || contentID >= m_list.size()) {
-//         return;
-//     }
+void CredentialModel::removeRow(int index) {
+    if (index < 0 || index >= m_list.size()) {
+        return;
+    }
 
-//     for (int i = 0; i < m_list.size(); ++i) {
-//         if (m_list[i].content_id == contentID) {
-//             switch(column) {
-//             case 2:
-//                 m_list[i][column].org_name = credential;
-//                 const QString role = OrganizationRole;
-//             case 3:
-//                 m_list[i][column].username = credential;
-//                 const QString role = UsernameRole;
-//             case 4:
-//                 m_list[i][column].password = credential;
-//                 const QString role = PasswordRole;
-//             default:
-//                 return;
-//             }
-
-//             QModelIndex modelIndex = createIndex(i, 0);
-//             emit dataChanged(modelIndex, modelIndex, {role})
-//         }
-//     }
-// }
+    beginRemoveRows(QModelIndex(), index, index);
+    m_list.removeAt(index);
+    endRemoveRows();
+}
 
 QVariant CredentialModel::data(const QModelIndex &index, int role) const {
     if (!index.isValid() || index.row() < 0 || index.row() >= m_list.size()) return QVariant();

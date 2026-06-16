@@ -29,8 +29,7 @@ public:
 
     void fetchCredentials(int groupID);
     void upsertCredentialRow(int groupID, Credential &credential);
-    void removeCredential(Credential &credential);
-    void removeCredentialRow(int contentID);
+    void removeCredentialRow(int groupID, int contentID);
 
 signals:
     // to models only
@@ -40,8 +39,8 @@ signals:
     void groupCacheUpdated(QList<Group> &cache);
 
     void credentialCacheUpdated(QList<Credential> &cache);
-    void credentialRowAdded();
-    void credentialRowUpsert(Credential &credential, int upsertMethod);
+    void newCredentialRowAdded(Credential &credential);
+    void credentialRowUpdated(Credential &credential);
     void credentialRowRemoved(int index);
 
     // to controller only

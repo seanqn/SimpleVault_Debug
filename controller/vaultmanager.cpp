@@ -5,7 +5,6 @@
 
 // TODO: QSortFilterProxyModel can filter vault content based on group_id via the groups model without needing to restructure how the data is retrieved from the repository
 
-// REFACTOR: removing read operations away from controller/repoository communication and just letting the repository handle model read updates via signals
 VaultManager::VaultManager(QObject *parent, const QString &databaseName)
     : QObject(parent) {
 
@@ -26,7 +25,8 @@ VaultManager::VaultManager(QObject *parent, const QString &databaseName)
 
     connect(m_repository, &Repository::credentialCacheUpdated, m_credentialModel, &CredentialModel::update);
     connect(this, &VaultManager::credentialRowAdded, m_credentialModel, &CredentialModel::appendRow);
-    connect(m_repository, &Repository::credentialRowUpsert, m_credentialModel, &CredentialModel::upsert);
+    connect(m_repository, &Repository::newCredentialRowAdded, m_credentialModel, &CredentialModel::syncNewRow);
+    connect(m_repository, &Repository::credentialRowUpdated, m_credentialModel, &CredentialModel::updateRow);
     // connect(m_repository, &Repository::credentialRowAdded, m_credentialModel, &CredentialModel::appendRow);
     // connect(m_repository, &Repository::credentialRowRemoved, m_credentialModel, &CredentialModel::removeRow);
     // connect(m_repository, &Repository::credentialColumnModified, m_credentialModel, &CredentialModel::modifyColumn);
@@ -39,7 +39,9 @@ void VaultManager::initRepository() {
     if (!m_repository->initDatabase()) emit repositoryInitializationError();
 }
 
-// groups model management methods
+/*
+groups model management methods
+*/
 
 // ideally should only be called by the constructor and other members
 void VaultManager::updateGroups() {
@@ -85,21 +87,107 @@ void VaultManager::removeGroup(int index, int groupID) {
     emit groupRemoveError(groupID);
 }
 
-// credential model management methods
-void VaultManager::addCredentialRow() {
-    emit credentialRowAdded(Credential());
+/*
+credential model management methods
+*/
+
+// adding a default row will switch active focus to it, requring QML to call startRowEdit
+// if active focus is swithed again, submitRow is called
+// per submitRow logic, a row that has been added without any changes made after editing is removed immediately
+void VaultManager::addDefaultCredentialRow() {
+    if (m_editRowIndex != -1) {
+        submitRow();
+    }
+
+    Credential newRow{};
+    emit credentialRowAdded(newRow);
+
+    m_editRowIndex = m_credentialModel->rowCount() - 1;
+    m_rowCache = newRow;
 }
 
-void VaultManager::upsertCredentialRow(int groupID, Credential &credential) {
-    // call repository method
-    m_repository->upsertCredentialRow(groupID, credential);
+void VaultManager::selectCredentialRow(Credential &row) {
+    m_currentContentID = row.content_id;
+    emit credentialRowChanged(m_currentContentID);
 }
 
-// slot functions
-void VaultManager::repositoryGroupCacheEmpty() {
-    emit groupsUpdated("Groups cache empty");
+void VaultManager::startRowEdit(int rowIndex) {
+    if (rowIndex < 0 || rowIndex >= m_credentialModel->rowCount()) {
+        qDebug() << "[VaultManager]: startRowEdit() called with row index: " << rowIndex << " out of range. Model row count: " << m_credentialModel->rowCount();
+        return;
+    }
+
+    // prevents this method from submitting the row when switching to different columns in the same row
+    if (m_editRowIndex == rowIndex) return;
+
+    if (m_editRowIndex != -1) {
+        submitRow();
+    }
+
+    m_editRowIndex = rowIndex;
+    m_rowCache = m_credentialModel->getCredentialAt(rowIndex);
+    m_currentContentID = m_rowCache.content_id;
 }
 
-void VaultManager::repositoryCredentialCacheEmpty() {
-    emit credentialsUpdated("Credential cache empty");
+void VaultManager::updateRowCacheField(const QString &role, const QString &value) {
+    if (m_editRowIndex == -1) return;
+
+    m_rowCache.content_id = m_currentContentID;
+
+    if (role == "org_name") {
+        m_rowCache.org_name = value;
+    }
+    else if (role == "username") {
+        m_rowCache.username = value;
+    }
+    else if (role == "password") {
+        m_rowCache.password = value;
+    }
+    else if (role == "email") {
+        m_rowCache.email = value;
+    }
+    else if (role == "note") {
+        m_rowCache.note = value;
+    }
 }
+
+void VaultManager::submitRow() {
+    if (m_editRowIndex == -1) return;
+
+    bool isEmpty = m_rowCache.org_name.isEmpty() &&
+                   m_rowCache.username.isEmpty() &&
+                   m_rowCache.password.isEmpty() &&
+                   m_rowCache.email.isEmpty() &&
+                   m_rowCache.note.isEmpty();
+
+    if (isEmpty) {
+        m_credentialModel->removeRow(m_editRowIndex);
+    }
+    else {
+        m_repository->upsertCredentialRow(m_currentGroupID, m_rowCache);
+    }
+
+    m_editRowIndex = -1;
+}
+
+// void VaultManager::upsertCredentialRow(
+//     const QString &org,
+//     const QString &user,
+//     const QString &pass,
+//     const QString &email,
+//     const QString &note)
+// {
+//     int contentID = m_currentContentID;
+//     int groupID = m_currentGroupID;
+
+//     Credential row {
+//         contentID,
+//         org.trimmed(),
+//         user.trimmed(),
+//         pass.trimmed(),
+//         email.trimmed(),
+//         note.trimmed()
+//     };
+
+//     m_repository->upsertCredentialRow(groupID, row);
+// }

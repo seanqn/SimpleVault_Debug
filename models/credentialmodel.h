@@ -22,13 +22,14 @@ public:
     int rowCount(const QModelIndex &parent = QModelIndex()) const override { return m_list.size(); }
     // columnCount expects reference to a parent but it is unused, no argument required
     int columnCount(const QModelIndex&) const override { return 5; }
+    Credential getCredentialAt(int rowIndex) { return m_list[rowIndex]; }
 
 public slots:
     void update(const QList<Credential> &credentials);
-    void appendRow(const Credential &row);
-    void upsert(Credential &credential, int upsertMethod);
-    // void removeRow(int contentID);
-    // void modifyColumn(int contentID, int column, const QString &credential);
+    void appendRow(const Credential &row = Credential{});
+    void syncNewRow(const Credential &row);
+    void updateRow(const Credential &row);
+    void removeRow(int index);
 
 private:
     QList<Credential> m_list;

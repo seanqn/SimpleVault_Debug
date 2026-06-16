@@ -171,17 +171,9 @@ bool DB_LocalStorage::removeGroup(int groupID) {
 // vault content (credential) methods
 
 // TODO: needs to either update the content id of the model or have a value reflective of the content id passed in
-Credential DB_LocalStorage::upsertVaultRowEntry(
-    int currGroupID,
-    int contentID,
-    const QString &organizationName,
-    const QString &username,
-    const QString &pass,
-    const QString &email,
-    const QString &note
-    ) {
+Credential DB_LocalStorage::upsertVaultRowEntry(int groupID, const Credential &credential) {
     QSqlQuery _query(_db);
-    bool insert = (contentID <= 0);
+    bool insert = (credential.content_id <= 0);
 
     if (insert) {
         _query.prepare("INSERT INTO vault_content (group_id, org_name, username, password, email, note) "
@@ -194,16 +186,16 @@ Credential DB_LocalStorage::upsertVaultRowEntry(
                        "password = :pw, "
                        "email = :eml, "
                        "note = :nte "
-                       "WHERE group_id = :gid AND content_id = :contentID");
-        _query.bindValue(":contentID", contentID);
+                       "WHERE group_id = :gid AND content_id = :cid");
+        _query.bindValue(":cid", credential.content_id);
     }
 
-    _query.bindValue(":gid", currGroupID);
-    _query.bindValue(":org", organizationName);
-    _query.bindValue(":usr", username);
-    _query.bindValue(":pw", pass);
-    _query.bindValue(":eml", email);
-    _query.bindValue(":nte", note);
+    _query.bindValue(":gid", groupID);
+    _query.bindValue(":org", credential.org_name);
+    _query.bindValue(":usr", credential.username);
+    _query.bindValue(":pw", credential.password);
+    _query.bindValue(":eml", credential.email);
+    _query.bindValue(":nte", credential.note);
 
     Credential row;
 
@@ -213,12 +205,12 @@ Credential DB_LocalStorage::upsertVaultRowEntry(
         return row;
     }
 
-    row.content_id = insert ? _query.lastInsertId().toInt() : contentID;
-    row.org_name = organizationName;
-    row.username = username;
-    row.password = pass;
-    row.email = email;
-    row.note = note;
+    row.content_id = insert ? _query.lastInsertId().toInt() : credential.content_id;
+    row.org_name = credential.org_name;
+    row.username = credential.username;
+    row.password = credential.password;
+    row.email = credential.email;
+    row.note = credential.note;
     return row;
 }
 

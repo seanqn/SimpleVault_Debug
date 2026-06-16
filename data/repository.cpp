@@ -93,7 +93,7 @@ void Repository::fetchCredentials(int groupID) {
         },
         "WHERE group_id = :groupID",
         {{":groupID", groupID}}
-        );
+    );
 
     if (m_credentialCache.isEmpty()) {
         emit credentialCacheEmpty();
@@ -105,39 +105,25 @@ void Repository::fetchCredentials(int groupID) {
 void Repository::upsertCredentialRow(int groupID, Credential &credential) {
     // if the contentID is 0 (default) then it is a new row, primaryKey is the updated content id passed to the model
     // otherwise, the content id already exists in the table and the row is instead updated
-    Credential upsertedRow = m_db->upsertVaultRowEntry(
-        groupID,
-        credential.content_id,
-        credential.org_name,
-        credential.username,
-        credential.password,
-        credential.email,
-        credential.note
-        );
+    Credential upsertedRow = m_db->upsertVaultRowEntry(groupID, credential);
 
     if (upsertedRow.content_id < 0) {
         qDebug() << "[repository]: credential row could not be upserted.";
         return;
     }
 
-    if (credential.content_id == 0) {
+    if (credential.content_id != upsertedRow.content_id) {
         qDebug() << "[repository]: credential row added in group " << groupID << ", content ID: " << upsertedRow.content_id;
-        emit credentialRowUpsert(upsertedRow, 0);
-        return;
+        emit newCredentialRowAdded(upsertedRow);
     }
-
-    qDebug() << "[repository]: credential row updated in group " << groupID << ". (content ID [delivered]: "
-             << credential.content_id << ") (content ID [retrieved]: " << upsertedRow.content_id << ")";
-    emit credentialRowUpsert(upsertedRow, 1);
-    return;
-}
-
-// called when previously filled credentials are left blank or removed
-void Repository::removeCredential(Credential &credential) {
-
+    else {
+        qDebug() << "[repository]: credential row updated in group " << groupID << ". (content ID [delivered]: "
+                 << credential.content_id << ") (content ID [retrieved]: " << upsertedRow.content_id << ")";
+        emit credentialRowUpdated(upsertedRow);
+    }
 }
 
 // called when an entire entry is removed
-void Repository::removeCredentialRow(int contentID) {
+void Repository::removeCredentialRow(int groupID, int contentID) {
 
 }
