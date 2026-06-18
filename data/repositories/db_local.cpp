@@ -181,7 +181,7 @@ Credential DB_LocalStorage::upsertVaultRowEntry(int groupID, const Credential &c
     }
     else {
         _query.prepare("UPDATE vault_content SET "
-                       "organization = :org, "
+                       "org_name = :org, "
                        "username = :usr, "
                        "password = :pw, "
                        "email = :eml, "

@@ -24,12 +24,10 @@ VaultManager::VaultManager(QObject *parent, const QString &databaseName)
     connect(m_repository, &Repository::groupEntryRenamed, m_groupsModel, &GroupsModel::rename);
 
     connect(m_repository, &Repository::credentialCacheUpdated, m_credentialModel, &CredentialModel::update);
-    connect(this, &VaultManager::credentialRowAdded, m_credentialModel, &CredentialModel::appendRow);
     connect(m_repository, &Repository::newCredentialRowAdded, m_credentialModel, &CredentialModel::syncNewRow);
     connect(m_repository, &Repository::credentialRowUpdated, m_credentialModel, &CredentialModel::updateRow);
-    // connect(m_repository, &Repository::credentialRowAdded, m_credentialModel, &CredentialModel::appendRow);
+
     // connect(m_repository, &Repository::credentialRowRemoved, m_credentialModel, &CredentialModel::removeRow);
-    // connect(m_repository, &Repository::credentialColumnModified, m_credentialModel, &CredentialModel::modifyColumn);
 
     updateGroups();
     m_repository->mockCredentialRow();
@@ -95,12 +93,18 @@ credential model management methods
 // if active focus is swithed again, submitRow is called
 // per submitRow logic, a row that has been added without any changes made after editing is removed immediately
 void VaultManager::addDefaultCredentialRow() {
+    // prevents another empty row from being added if an empty row already exists
+    if (m_editRowIndex == m_credentialModel->rowCount() - 1) {
+        qDebug() << "addDefaultCredentialRow: empty credential row already exists";
+        return;
+    }
+
     if (m_editRowIndex != -1) {
         submitRow();
     }
 
     Credential newRow{};
-    emit credentialRowAdded(newRow);
+    m_credentialModel->appendRow(newRow);
 
     m_editRowIndex = m_credentialModel->rowCount() - 1;
     m_rowCache = newRow;
@@ -149,6 +153,12 @@ void VaultManager::updateRowCacheField(const QString &role, const QString &value
     else if (role == "note") {
         m_rowCache.note = value;
     }
+    else {
+        qDebug() << "updateRowCacheField: no " << role << " role found in row cache or invalid value " << value;
+        return;
+    }
+
+    qDebug() << "updateRowCacheField: " << role << " field in row cache updated to " << value;
 }
 
 void VaultManager::submitRow() {
@@ -162,32 +172,15 @@ void VaultManager::submitRow() {
 
     if (isEmpty) {
         m_credentialModel->removeRow(m_editRowIndex);
+        qDebug() << "submitRow: all values in row cache are after editing, new row has been removed";
     }
     else {
+        qDebug() << "submitRow: calling repository->upsertCredentialRow for [group] " << m_currentGroupID
+                 << ", row cache: [content id]: " << m_rowCache.content_id << ", [org_name]: " << m_rowCache.org_name
+                 << ", [username]: " << m_rowCache.username << " [password]: " << m_rowCache.password
+                 << ", [email]: " << m_rowCache.email << " [note]: " << m_rowCache.note;
         m_repository->upsertCredentialRow(m_currentGroupID, m_rowCache);
     }
 
     m_editRowIndex = -1;
 }
-
-// void VaultManager::upsertCredentialRow(
-//     const QString &org,
-//     const QString &user,
-//     const QString &pass,
-//     const QString &email,
-//     const QString &note)
-// {
-//     int contentID = m_currentContentID;
-//     int groupID = m_currentGroupID;
-
-//     Credential row {
-//         contentID,
-//         org.trimmed(),
-//         user.trimmed(),
-//         pass.trimmed(),
-//         email.trimmed(),
-//         note.trimmed()
-//     };
-
-//     m_repository->upsertCredentialRow(groupID, row);
-// }

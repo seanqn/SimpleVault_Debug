@@ -3,19 +3,25 @@
 CredentialModel::CredentialModel(QObject *parent)
     : QAbstractListModel(parent) {}
 
-// refreshes the UI displaying updated credentials
+// refreshes the UI to display all credentials of the selected group (as of now is only called once after build)
 void CredentialModel::update(const QList<Credential> &credentials) {
     beginResetModel();
     m_list = credentials;
     endResetModel();
 }
 
+// only appends empty rows
 void CredentialModel::appendRow(const Credential &row) {
     beginInsertRows(QModelIndex(), m_list.size(), m_list.size());
     m_list.append(row);
     endInsertRows();
 }
 
+/*
+basically just the updateRow method but for just added rows that are in edit
+intended to prevent double appends by the controller addDefaultCredentialRow method
+and the repository upsertCredentialRow method, both of which would call this appendRow sequentially
+*/
 void CredentialModel::syncNewRow(const Credential &row) {
     for (int i = 0; i < m_list.size(); ++i) {
         if (m_list[i].content_id == 0) {
@@ -29,6 +35,7 @@ void CredentialModel::syncNewRow(const Credential &row) {
     appendRow(row);
 }
 
+// is only called by the repository upserCredentialRow method if the row isn't new (content id != 0)
 void CredentialModel::updateRow(const Credential &row) {
     for (int i = 0; i < m_list.size(); ++i) {
         if (m_list[i].content_id == row.content_id) {

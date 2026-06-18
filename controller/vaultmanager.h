@@ -35,13 +35,6 @@ public:
     // adds empty row, if the row columns contain any default values after editing, the row is deconstructed
     Q_INVOKABLE void addDefaultCredentialRow();
     Q_INVOKABLE void selectCredentialRow(Credential &row);
-    // Q_INVOKABLE void upsertCredentialRow(
-    //     const QString &org,
-    //     const QString &user,
-    //     const QString &pass,
-    //     const QString &email,
-    //     const QString &note
-    // );
     // Q_INVOKABLE void removeCredentialRow();
     Q_INVOKABLE int getCurrentContentID() const { return m_currentContentID; }
     Q_INVOKABLE void startRowEdit(int rowIndex);
@@ -65,6 +58,7 @@ signals:
     // argument is expected to be default, but matches that of the listening slot
     void credentialRowAdded(const Credential = Credential());
     void credentialRowChanged(int id);
+    void credentialRowUpdated(const Credential &credential);
     // void credentialRowRemoved();
     // void credentialRowRemoveError();
 
