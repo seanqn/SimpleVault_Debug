@@ -19,8 +19,13 @@ bool Repository::initDatabase() {
 void Repository::mockCredentialRow() {
     // group id, organization, username, pasword, email, additional optional notes
     int groupID = 1;
-    int contentID = 0;
-    Credential mockRow = {contentID, "mock_organization", "mock_username", "mock_password", "mock_email", "mock_note"};
+    Credential mockRow;
+    qDebug() << "[repository]: calling mockCredentialRow for group " << groupID << ", content id: " << mockRow.content_id;
+    mockRow.org_name = "mock_org";
+    mockRow.username = "mock_user";
+    mockRow.password = "mock_pass";
+    mockRow.email = "mock_email";
+    mockRow.note = "mock_note";
     upsertCredentialRow(groupID, mockRow);
 }
 
@@ -37,6 +42,7 @@ bool Repository::addGroup(const QString &groupName) {
 
 // the only method where the cache is implemented is for the purpose of overwriting the group model's internal list
 void Repository::fetchGroups() {
+    qDebug() << "[repository]: fetching groups";
     m_groupCache = m_db->fetchRecords<Group>(
         "groups",
         {"id", "name", "created_at"},
@@ -51,10 +57,15 @@ void Repository::fetchGroups() {
 
     if (m_groupCache.isEmpty()) {
         emit groupCacheEmpty();
+        qDebug() << "[repository]: group cache was empty";
         return;
     }
 
     emit groupCacheUpdated(m_groupCache);
+    qDebug() << "[repository]: group cache was updated with the items from database, listing up to first 5 groups: ";
+    for (Group &item : m_groupCache) {
+        qDebug() << "group id: " << item.id << ", group name" << item.name << ", created at: " << item.created_at;
+    }
 }
 
 bool Repository::renameGroup(int groupID, const QString &newName) {
@@ -79,11 +90,13 @@ bool Repository::removeGroup(int index, int groupID) {
 
 // lambda effectively passes a template type Mapping object to the required paramater
 void Repository::fetchCredentials(int groupID) {
+    qDebug() << "[repository]: fetching credentials";
     QList<Credential> m_credentialCache = m_db->fetchRecords<Credential>(
         "vault_content",
-        {"org_name", "username", "password"},
+        {"content_id", "org_name", "username", "password", "email", "note"},
         [](auto mapper) {
             Credential c;
+            c.content_id = mapper("content_id").toInt();
             c.org_name = mapper("org_name").toString();
             c.username = mapper("username").toString();
             c.password = mapper("password").toString();
@@ -97,9 +110,14 @@ void Repository::fetchCredentials(int groupID) {
 
     if (m_credentialCache.isEmpty()) {
         emit credentialCacheEmpty();
+        qDebug() << "[repository]: credential cache was empty";
     }
 
     emit credentialCacheUpdated(m_credentialCache);
+    qDebug() << "[repository]: credential cache was updated with items from database, listing up to first 5 rows: ";
+    for (Credential &item : m_credentialCache) {
+        qDebug() << "content id: " << item.content_id;
+    }
 }
 
 void Repository::upsertCredentialRow(int groupID, Credential &credential) {

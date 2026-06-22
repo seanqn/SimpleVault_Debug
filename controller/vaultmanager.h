@@ -34,7 +34,7 @@ public:
 
     // adds empty row, if the row columns contain any default values after editing, the row is deconstructed
     Q_INVOKABLE void addDefaultCredentialRow();
-    Q_INVOKABLE void selectCredentialRow(Credential &row);
+    Q_INVOKABLE void selectCredentialRow(int rowIndex);
     // Q_INVOKABLE void removeCredentialRow();
     Q_INVOKABLE int getCurrentContentID() const { return m_currentContentID; }
     Q_INVOKABLE void startRowEdit(int rowIndex);

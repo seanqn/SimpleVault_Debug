@@ -211,6 +211,7 @@ Credential DB_LocalStorage::upsertVaultRowEntry(int groupID, const Credential &c
     row.password = credential.password;
     row.email = credential.email;
     row.note = credential.note;
+    qDebug() << "db::upsertVaultRowEntry: upserted row: cid: " << row.content_id;
     return row;
 }
 

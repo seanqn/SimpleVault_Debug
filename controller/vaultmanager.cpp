@@ -28,13 +28,15 @@ VaultManager::VaultManager(QObject *parent, const QString &databaseName)
     connect(m_repository, &Repository::credentialRowUpdated, m_credentialModel, &CredentialModel::updateRow);
 
     // connect(m_repository, &Repository::credentialRowRemoved, m_credentialModel, &CredentialModel::removeRow);
-
-    updateGroups();
-    m_repository->mockCredentialRow();
 }
 
 void VaultManager::initRepository() {
-    if (!m_repository->initDatabase()) emit repositoryInitializationError();
+    if (!m_repository->initDatabase())  {
+        emit repositoryInitializationError();
+        return;
+    }
+    m_repository->mockCredentialRow();
+    updateGroups();
 }
 
 /*
@@ -49,7 +51,6 @@ void VaultManager::updateGroups() {
 // database write entry is added to database and only appended to the cache
 void VaultManager::createGroup(const QString &name) {
     if (m_repository->addGroup(name)) {
-        emit groupAdded();
         return;
     }
 
@@ -94,7 +95,7 @@ credential model management methods
 // per submitRow logic, a row that has been added without any changes made after editing is removed immediately
 void VaultManager::addDefaultCredentialRow() {
     // prevents another empty row from being added if an empty row already exists
-    if (m_editRowIndex == m_credentialModel->rowCount() - 1) {
+    if (m_editRowIndex == m_credentialModel->rowCount()) {
         qDebug() << "addDefaultCredentialRow: empty credential row already exists";
         return;
     }
@@ -107,12 +108,13 @@ void VaultManager::addDefaultCredentialRow() {
     m_credentialModel->appendRow(newRow);
 
     m_editRowIndex = m_credentialModel->rowCount() - 1;
-    m_rowCache = newRow;
+    selectCredentialRow(m_editRowIndex);
 }
 
-void VaultManager::selectCredentialRow(Credential &row) {
-    m_currentContentID = row.content_id;
-    emit credentialRowChanged(m_currentContentID);
+// selection logic is vital since it also determines when the edit row index is reassigned
+void VaultManager::selectCredentialRow(int rowIndex) {
+    qDebug() << "[VaultManager]: selectCredentialRow called to select row with model index: " << rowIndex;
+    startRowEdit(rowIndex);
 }
 
 void VaultManager::startRowEdit(int rowIndex) {
@@ -121,16 +123,19 @@ void VaultManager::startRowEdit(int rowIndex) {
         return;
     }
 
-    // prevents this method from submitting the row when switching to different columns in the same row
+    // prevents submitting the row when switching to different columns in the same row
     if (m_editRowIndex == rowIndex) return;
 
+    // this method can be called directly by QML so this guard catches if another row was in edit and did not submit
     if (m_editRowIndex != -1) {
+        qDebug() << "[VaultManager]: startRowEdit() submitting an unsubmitted row previously in edit for row index: " << m_editRowIndex;
         submitRow();
     }
 
     m_editRowIndex = rowIndex;
     m_rowCache = m_credentialModel->getCredentialAt(rowIndex);
     m_currentContentID = m_rowCache.content_id;
+    qDebug() << "[VaultManager]: starting edit for model row: " << m_editRowIndex << ", with content id: " << m_currentContentID;
 }
 
 void VaultManager::updateRowCacheField(const QString &role, const QString &value) {
@@ -157,8 +162,6 @@ void VaultManager::updateRowCacheField(const QString &role, const QString &value
         qDebug() << "updateRowCacheField: no " << role << " role found in row cache or invalid value " << value;
         return;
     }
-
-    qDebug() << "updateRowCacheField: " << role << " field in row cache updated to " << value;
 }
 
 void VaultManager::submitRow() {
