@@ -90,9 +90,9 @@ void VaultManager::removeGroup(int index, int groupID) {
 credential model management methods
 */
 
-// adding a default row will switch active focus to it, requring QML to call startRowEdit
-// if active focus is swithed again, submitRow is called
 // per submitRow logic, a row that has been added without any changes made after editing is removed immediately
+// ideally starts editing after added, but cannot conflict with the startRowEdit logic (if m_editRowIndex is set here, any rows that were previously in edit will not be submitted and retain old values)
+// could pass the last model index to startRowEdit, but the active focus still needs to be true in QML
 void VaultManager::addDefaultCredentialRow() {
     // prevents another empty row from being added if an empty row already exists
     if (m_editRowIndex == m_credentialModel->rowCount()) {
@@ -106,15 +106,10 @@ void VaultManager::addDefaultCredentialRow() {
 
     Credential newRow{};
     m_credentialModel->appendRow(newRow);
-
-    m_editRowIndex = m_credentialModel->rowCount() - 1;
-    selectCredentialRow(m_editRowIndex);
 }
 
-// selection logic is vital since it also determines when the edit row index is reassigned
 void VaultManager::selectCredentialRow(int rowIndex) {
     qDebug() << "[VaultManager]: selectCredentialRow called to select row with model index: " << rowIndex;
-    startRowEdit(rowIndex);
 }
 
 void VaultManager::startRowEdit(int rowIndex) {
@@ -129,61 +124,77 @@ void VaultManager::startRowEdit(int rowIndex) {
     // this method can be called directly by QML so this guard catches if another row was in edit and did not submit
     if (m_editRowIndex != -1) {
         qDebug() << "[VaultManager]: startRowEdit() submitting an unsubmitted row previously in edit for row index: " << m_editRowIndex;
+        m_row = m_credentialModel->getCredentialAt(m_editRowIndex);
         submitRow();
     }
 
     m_editRowIndex = rowIndex;
-    m_rowCache = m_credentialModel->getCredentialAt(rowIndex);
-    m_currentContentID = m_rowCache.content_id;
+    // stores the existing row fields before updating
+    m_row = m_credentialModel->getCredentialAt(rowIndex);
+    m_editCache = m_row;
+    m_currentContentID = m_row.content_id;
     qDebug() << "[VaultManager]: starting edit for model row: " << m_editRowIndex << ", with content id: " << m_currentContentID;
 }
 
+// this method is only called when a column has finished editing
 void VaultManager::updateRowCacheField(const QString &role, const QString &value) {
     if (m_editRowIndex == -1) return;
 
-    m_rowCache.content_id = m_currentContentID;
-
     if (role == "org_name") {
-        m_rowCache.org_name = value;
+        m_editCache.org_name = value;
     }
     else if (role == "username") {
-        m_rowCache.username = value;
+        m_editCache.username = value;
     }
     else if (role == "password") {
-        m_rowCache.password = value;
+        m_editCache.password = value;
     }
     else if (role == "email") {
-        m_rowCache.email = value;
+        m_editCache.email = value;
     }
     else if (role == "note") {
-        m_rowCache.note = value;
+        m_editCache.note = value;
     }
     else {
-        qDebug() << "updateRowCacheField: no " << role << " role found in row cache or invalid value " << value;
+        qDebug() << "updateRowCacheField: no " << role << " role found in edit cache or invalid value " << value;
         return;
     }
+
+    qDebug() << "[VaultManager]: updatedRowCacheField updated role " << role << " to " << value;
 }
 
 void VaultManager::submitRow() {
     if (m_editRowIndex == -1) return;
 
-    bool isEmpty = m_rowCache.org_name.isEmpty() &&
-                   m_rowCache.username.isEmpty() &&
-                   m_rowCache.password.isEmpty() &&
-                   m_rowCache.email.isEmpty() &&
-                   m_rowCache.note.isEmpty();
+    bool isEmpty = m_editCache.org_name.isEmpty() &&
+                   m_editCache.username.isEmpty() &&
+                   m_editCache.password.isEmpty() &&
+                   m_editCache.email.isEmpty() &&
+                   m_editCache.note.isEmpty();
 
+    bool isClean = (m_editCache.org_name == m_row.org_name &&
+                    m_editCache.username == m_row.username &&
+                    m_editCache.password == m_row.password &&
+                    m_editCache.email == m_row.email &&
+                    m_editCache.note == m_row.note);
+
+    // check to see if the edit cache is unchanged from the row cache
     if (isEmpty) {
         m_credentialModel->removeRow(m_editRowIndex);
-        qDebug() << "submitRow: all values in row cache are after editing, new row has been removed";
+        qDebug() << "submitRow: all values in row cache are empty after editing, new row has been removed";
+    }
+    else if (isClean) {
+        qDebug() << "submitRow: edit cache is clean, no action done";
     }
     else {
         qDebug() << "submitRow: calling repository->upsertCredentialRow for [group] " << m_currentGroupID
-                 << ", row cache: [content id]: " << m_rowCache.content_id << ", [org_name]: " << m_rowCache.org_name
-                 << ", [username]: " << m_rowCache.username << " [password]: " << m_rowCache.password
-                 << ", [email]: " << m_rowCache.email << " [note]: " << m_rowCache.note;
-        m_repository->upsertCredentialRow(m_currentGroupID, m_rowCache);
+                 << ", edit cache: [content id]: " << m_editCache.content_id << ", [org_name]: " << m_editCache.org_name
+                 << ", [username]: " << m_editCache.username << " [password]: " << m_editCache.password
+                 << ", [email]: " << m_editCache.email << " [note]: " << m_editCache.note;
+        m_repository->upsertCredentialRow(m_currentGroupID, m_editCache);
     }
 
     m_editRowIndex = -1;
+    m_row = Credential{};
+    m_editCache = Credential{};
 }

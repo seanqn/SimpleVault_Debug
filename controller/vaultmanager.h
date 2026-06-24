@@ -72,7 +72,8 @@ private:
     Repository* m_repository;
     int m_currentGroupID;
     int m_currentContentID;
-    Credential m_rowCache;
+    Credential m_row; // stores rows that already exist in the model
+    Credential m_editCache; // stores currently edited row (at edit row index) and serves as a comparater to determine if the row actually need be submitted
     int m_editRowIndex = -1;
 };
 

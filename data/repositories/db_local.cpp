@@ -66,7 +66,6 @@ bool DB_LocalStorage::initDB() {
     QSqlQuery _query(_db);
     // _query.exec("PRAGMA foreign_keys = ON;");
     // groups table
-    // slug to be added, removed now for base testing
     _query.exec("CREATE TABLE IF NOT EXISTS groups ( "
                    "id INTEGER PRIMARY KEY AUTOINCREMENT, "
                    "name TEXT NOT NULL UNIQUE, "
@@ -77,7 +76,7 @@ bool DB_LocalStorage::initDB() {
                    "content_id INTEGER PRIMARY KEY AUTOINCREMENT, "
                    "org_name TEXT, "
                    "username TEXT, "
-                   "password TEXT NOT NULL, "
+                   "password TEXT, "
                    "email TEXT, "
                    "note TEXT, "
                    "FOREIGN KEY(group_id) REFERENCES groups(id) ON DELETE CASCADE)");
@@ -170,7 +169,6 @@ bool DB_LocalStorage::removeGroup(int groupID) {
 
 // vault content (credential) methods
 
-// TODO: needs to either update the content id of the model or have a value reflective of the content id passed in
 Credential DB_LocalStorage::upsertVaultRowEntry(int groupID, const Credential &credential) {
     QSqlQuery _query(_db);
     bool insert = (credential.content_id <= 0);
