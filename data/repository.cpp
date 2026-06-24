@@ -62,10 +62,7 @@ void Repository::fetchGroups() {
     }
 
     emit groupCacheUpdated(m_groupCache);
-    qDebug() << "[repository]: group cache was updated with the items from database, listing up to first 5 groups: ";
-    for (Group &item : m_groupCache) {
-        qDebug() << "group id: " << item.id << ", group name" << item.name << ", created at: " << item.created_at;
-    }
+    qDebug() << "[repository]: group cache was updated with the items from database";
 }
 
 bool Repository::renameGroup(int groupID, const QString &newName) {
@@ -114,10 +111,7 @@ void Repository::fetchCredentials(int groupID) {
     }
 
     emit credentialCacheUpdated(m_credentialCache);
-    qDebug() << "[repository]: credential cache was updated with items from database, listing up to first 5 rows: ";
-    for (Credential &item : m_credentialCache) {
-        qDebug() << "content id: " << item.content_id;
-    }
+    qDebug() << "[repository]: credential cache was updated with items from database";
 }
 
 void Repository::upsertCredentialRow(int groupID, Credential &credential) {

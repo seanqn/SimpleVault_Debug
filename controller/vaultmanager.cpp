@@ -59,6 +59,10 @@ void VaultManager::createGroup(const QString &name) {
 
 void VaultManager::selectGroup(int groupID) {
     // seems to be some discrepancy between actual group id in the db table and autoincremented model IDRole values
+    if (m_editRowIndex != -1) {
+        submitRow();
+    }
+
     m_repository->fetchCredentials(groupID);
     m_currentGroupID = groupID;
     emit groupChanged(m_currentGroupID);
@@ -124,7 +128,6 @@ void VaultManager::startRowEdit(int rowIndex) {
     // this method can be called directly by QML so this guard catches if another row was in edit and did not submit
     if (m_editRowIndex != -1) {
         qDebug() << "[VaultManager]: startRowEdit() submitting an unsubmitted row previously in edit for row index: " << m_editRowIndex;
-        m_row = m_credentialModel->getCredentialAt(m_editRowIndex);
         submitRow();
     }
 
@@ -178,7 +181,6 @@ void VaultManager::submitRow() {
                     m_editCache.email == m_row.email &&
                     m_editCache.note == m_row.note);
 
-    // check to see if the edit cache is unchanged from the row cache
     if (isEmpty) {
         m_credentialModel->removeRow(m_editRowIndex);
         qDebug() << "submitRow: all values in row cache are empty after editing, new row has been removed";
