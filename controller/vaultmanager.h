@@ -40,6 +40,8 @@ public:
     Q_INVOKABLE void startRowEdit(int rowIndex);
     Q_INVOKABLE void updateRowCacheField(const QString &role, const QString &value);
     Q_INVOKABLE void submitRow();
+    Q_INVOKABLE bool editCacheIsEmpty();
+    Q_INVOKABLE bool editCacheIsClean();
 
 signals:
     void repositoryInitializationError();

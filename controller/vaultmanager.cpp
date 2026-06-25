@@ -94,6 +94,27 @@ void VaultManager::removeGroup(int index, int groupID) {
 credential model management methods
 */
 
+// invokable edit cache verification methods
+// credentialRowIsEmpty tracks either a default row that was submitted without any changes or a row where all fields were cleared
+bool VaultManager::editCacheIsEmpty() {
+    bool isEmpty = m_editCache.org_name.isEmpty() &&
+                   m_editCache.username.isEmpty() &&
+                   m_editCache.password.isEmpty() &&
+                   m_editCache.email.isEmpty() &&
+                   m_editCache.note.isEmpty();
+    return isEmpty;
+}
+
+// credentialRowIsClean tracks any diffs
+bool VaultManager::editCacheIsClean() {
+    bool isClean = (m_editCache.org_name == m_row.org_name &&
+                    m_editCache.username == m_row.username &&
+                    m_editCache.password == m_row.password &&
+                    m_editCache.email == m_row.email &&
+                    m_editCache.note == m_row.note);
+    return isClean;
+}
+
 // per submitRow logic, a row that has been added without any changes made after editing is removed immediately
 // ideally starts editing after added, but cannot conflict with the startRowEdit logic (if m_editRowIndex is set here, any rows that were previously in edit will not be submitted and retain old values)
 // could pass the last model index to startRowEdit, but the active focus still needs to be true in QML
@@ -169,23 +190,11 @@ void VaultManager::updateRowCacheField(const QString &role, const QString &value
 void VaultManager::submitRow() {
     if (m_editRowIndex == -1) return;
 
-    bool isEmpty = m_editCache.org_name.isEmpty() &&
-                   m_editCache.username.isEmpty() &&
-                   m_editCache.password.isEmpty() &&
-                   m_editCache.email.isEmpty() &&
-                   m_editCache.note.isEmpty();
-
-    bool isClean = (m_editCache.org_name == m_row.org_name &&
-                    m_editCache.username == m_row.username &&
-                    m_editCache.password == m_row.password &&
-                    m_editCache.email == m_row.email &&
-                    m_editCache.note == m_row.note);
-
-    if (isEmpty) {
+    if (editCacheIsEmpty()) {
         m_credentialModel->removeRow(m_editRowIndex);
         qDebug() << "submitRow: all values in row cache are empty after editing, new row has been removed";
     }
-    else if (isClean) {
+    else if (editCacheIsClean()) {
         qDebug() << "submitRow: edit cache is clean, no action done";
     }
     else {
