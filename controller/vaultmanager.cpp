@@ -58,7 +58,6 @@ void VaultManager::createGroup(const QString &name) {
 }
 
 void VaultManager::selectGroup(int groupID) {
-    // seems to be some discrepancy between actual group id in the db table and autoincremented model IDRole values
     if (m_editRowIndex != -1) {
         submitRow();
     }
@@ -120,12 +119,15 @@ bool VaultManager::editCacheIsClean() {
 // could pass the last model index to startRowEdit, but the active focus still needs to be true in QML
 void VaultManager::addDefaultCredentialRow() {
     // prevents another empty row from being added if an empty row already exists
-    if (m_editRowIndex == m_credentialModel->rowCount()) {
-        qDebug() << "addDefaultCredentialRow: empty credential row already exists";
-        return;
+    int listSize = m_credentialModel->rowCount();
+    if (listSize > 0) {
+        if (m_credentialModel->getCredentialAt(listSize - 1).content_id == 0) {
+            qDebug() << "new row exists. no action done";
+            return;
+        }
     }
 
-    if (m_editRowIndex != -1) {
+    if (m_editRowIndex != -1 && !(editCacheIsClean())) {
         submitRow();
     }
 

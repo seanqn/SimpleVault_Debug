@@ -38,6 +38,7 @@ public:
     // Q_INVOKABLE void removeCredentialRow();
     Q_INVOKABLE int getCurrentContentID() const { return m_currentContentID; }
     Q_INVOKABLE void startRowEdit(int rowIndex);
+    Q_INVOKABLE int getEditRowIndex() const { return m_editRowIndex; }
     Q_INVOKABLE void updateRowCacheField(const QString &role, const QString &value);
     Q_INVOKABLE void submitRow();
     Q_INVOKABLE bool editCacheIsEmpty();
