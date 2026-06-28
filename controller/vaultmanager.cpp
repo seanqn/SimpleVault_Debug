@@ -59,7 +59,7 @@ void VaultManager::createGroup(const QString &name) {
 
 void VaultManager::selectGroup(int groupID) {
     if (m_editRowIndex != -1) {
-        submitRow();
+        submitField();
     }
 
     m_repository->fetchCredentials(groupID);
@@ -128,7 +128,7 @@ void VaultManager::addDefaultCredentialRow() {
     }
 
     if (m_editRowIndex != -1 && !(editCacheIsClean())) {
-        submitRow();
+        submitField();
     }
 
     Credential newRow{};
@@ -141,7 +141,7 @@ void VaultManager::selectCredentialRow(int rowIndex) {
 
 void VaultManager::startRowEdit(int rowIndex) {
     if (rowIndex < 0 || rowIndex >= m_credentialModel->rowCount()) {
-        qDebug() << "[VaultManager]: startRowEdit() called with row index: " << rowIndex << " out of range. Model row count: " << m_credentialModel->rowCount();
+        qDebug() << "[VaultManager]: startRowEdit() called with row index: " << rowIndex << " out of range. Model row count: " << m_credentialModel->rowCount() - 1;
         return;
     }
 
@@ -151,7 +151,7 @@ void VaultManager::startRowEdit(int rowIndex) {
     // this method can be called directly by QML so this guard catches if another row was in edit and did not submit
     if (m_editRowIndex != -1) {
         qDebug() << "[VaultManager]: startRowEdit() submitting an unsubmitted row previously in edit for row index: " << m_editRowIndex;
-        submitRow();
+        submitField();
     }
 
     m_editRowIndex = rowIndex;
@@ -162,7 +162,6 @@ void VaultManager::startRowEdit(int rowIndex) {
     qDebug() << "[VaultManager]: starting edit for model row: " << m_editRowIndex << ", with content id: " << m_currentContentID;
 }
 
-// this method is only called when a column has finished editing
 void VaultManager::updateRowCacheField(const QString &role, const QString &value) {
     if (m_editRowIndex == -1) return;
 
@@ -189,7 +188,9 @@ void VaultManager::updateRowCacheField(const QString &role, const QString &value
     qDebug() << "[VaultManager]: updatedRowCacheField updated role " << role << " to " << value;
 }
 
-void VaultManager::submitRow() {
+// called when finished editing or tapped away from table
+// FIX: method is functional but the current column-based submission resets all edit variables upon each call for the same row
+void VaultManager::submitField() {
     if (m_editRowIndex == -1) return;
 
     if (editCacheIsEmpty()) {

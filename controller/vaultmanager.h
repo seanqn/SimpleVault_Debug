@@ -40,13 +40,12 @@ public:
     Q_INVOKABLE void startRowEdit(int rowIndex);
     Q_INVOKABLE int getEditRowIndex() const { return m_editRowIndex; }
     Q_INVOKABLE void updateRowCacheField(const QString &role, const QString &value);
-    Q_INVOKABLE void submitRow();
+    Q_INVOKABLE void submitField();
     Q_INVOKABLE bool editCacheIsEmpty();
     Q_INVOKABLE bool editCacheIsClean();
 
 signals:
     void repositoryInitializationError();
-
     void groupAdded();
     void createGroupError();
     void groupsUpdated(const QString &msg);
