@@ -9,25 +9,27 @@ VaultManager::VaultManager(QObject *parent, const QString &databaseName)
     : QObject(parent) {
 
     m_repository = new Repository(this, databaseName);
-
-    m_groupsModel = new GroupsModel(this);
-    m_credentialModel = new CredentialModel(this);
-
-    initRepository();
-
     connect(m_repository, &Repository::groupCacheEmpty, this, &VaultManager::repositoryGroupCacheEmpty);
     connect(m_repository, &Repository::credentialCacheEmpty, this, &VaultManager::repositoryCredentialCacheEmpty);
 
+    m_groupsModel = new GroupsModel(this);
     connect(m_repository, &Repository::groupCacheUpdated, m_groupsModel, &GroupsModel::update);
     connect(m_repository, &Repository::groupEntryAdded, m_groupsModel, &GroupsModel::append);
     connect(m_repository, &Repository::groupEntryRemoved, m_groupsModel, &GroupsModel::remove);
     connect(m_repository, &Repository::groupEntryRenamed, m_groupsModel, &GroupsModel::rename);
 
+    m_credentialModel = new CredentialModel(this);
     connect(m_repository, &Repository::credentialCacheUpdated, m_credentialModel, &CredentialModel::update);
-    connect(m_repository, &Repository::newCredentialRowAdded, m_credentialModel, &CredentialModel::syncNewRow);
-    connect(m_repository, &Repository::credentialRowUpdated, m_credentialModel, &CredentialModel::updateRow);
+    // connect(m_repository, &Repository::newCredentialRowAdded, m_credentialModel, &CredentialModel::syncNewRow);
+    // connect(m_repository, &Repository::credentialRowUpdated, m_credentialModel, &CredentialModel::updateRow);
 
-    // connect(m_repository, &Repository::credentialRowRemoved, m_credentialModel, &CredentialModel::removeRow);
+    m_autoSaveTimer = new QTimer(this);
+    m_autoSaveTimer->setSingleShot(true);
+    m_autoSaveTimer->setInterval(1500);
+    connect(m_autoSaveTimer, &QTimer::timeout, this, &VaultManager::commitEditCacheToDraft);
+    connect(m_autoSaveTimer, &QTimer::timeout, this, &VaultManager::relayAutoSaveTimeout);
+
+    initRepository();
 }
 
 void VaultManager::initRepository() {
@@ -59,7 +61,7 @@ void VaultManager::createGroup(const QString &name) {
 
 void VaultManager::selectGroup(int groupID) {
     if (m_editRowIndex != -1) {
-        submitField();
+        commitEditCacheToDraft();
     }
 
     m_repository->fetchCredentials(groupID);
@@ -128,7 +130,7 @@ void VaultManager::addDefaultCredentialRow() {
     }
 
     if (m_editRowIndex != -1 && !(editCacheIsClean())) {
-        submitField();
+        submitAndResetEditCache();
     }
 
     Credential newRow{};
@@ -151,7 +153,7 @@ void VaultManager::startRowEdit(int rowIndex) {
     // this method can be called directly by QML so this guard catches if another row was in edit and did not submit
     if (m_editRowIndex != -1) {
         qDebug() << "[VaultManager]: startRowEdit() submitting an unsubmitted row previously in edit for row index: " << m_editRowIndex;
-        submitField();
+        submitAndResetEditCache();
     }
 
     m_editRowIndex = rowIndex;
@@ -162,7 +164,7 @@ void VaultManager::startRowEdit(int rowIndex) {
     qDebug() << "[VaultManager]: starting edit for model row: " << m_editRowIndex << ", with content id: " << m_currentContentID;
 }
 
-void VaultManager::updateRowCacheField(const QString &role, const QString &value) {
+void VaultManager::updateEditCache(const QString &role, const QString &value) {
     if (m_editRowIndex == -1) return;
 
     if (role == "org_name") {
@@ -188,20 +190,45 @@ void VaultManager::updateRowCacheField(const QString &role, const QString &value
     qDebug() << "[VaultManager]: updatedRowCacheField updated role " << role << " to " << value;
 }
 
-// called when finished editing or tapped away from table
-// FIX: method is functional but the current column-based submission resets all edit variables upon each call for the same row
-void VaultManager::submitField() {
+// when a single column has finished editing, reset the timer
+void VaultManager::resetAutoSaveTimer() {
+    if (m_editRowIndex != -1) {
+        m_autoSaveTimer->start();
+        qDebug() << "[VaultManager]: autosave: timer start/reset";
+    }
+}
+
+void VaultManager::stopAutoSaveTimer() {
+    if (m_autoSaveTimer->isActive()) {
+        m_autoSaveTimer->stop();
+        qDebug() << "[VaultManager]: autosave: timer force stopped";
+    }
+}
+
+void VaultManager::relayAutoSaveTimeout() {
+    qDebug() << "[VaultManager]: autosave: timer timed out";
+}
+
+void VaultManager::commitEditCacheToDraft() {
+    // when a column has finished editing, commit to the draft
+    // the draft may be a separate file (JSON or other)
+}
+
+// called when the edit index has changed or active focus loss from editing row
+void VaultManager::submitAndResetEditCache() {
     if (m_editRowIndex == -1) return;
 
+    qDebug() << "[VaultManager]: performing submit and reset edit cache";
+    // the timer will submit row if hits timeout, but manually stopping timer requires manual submission
     if (editCacheIsEmpty()) {
         m_credentialModel->removeRow(m_editRowIndex);
-        qDebug() << "submitRow: all values in row cache are empty after editing, new row has been removed";
+        qDebug() << "all values in row cache are empty after editing, new row has been removed";
     }
     else if (editCacheIsClean()) {
-        qDebug() << "submitRow: edit cache is clean, no action done";
+        qDebug() << "edit cache is clean, no action done";
     }
     else {
-        qDebug() << "submitRow: calling repository->upsertCredentialRow for [group] " << m_currentGroupID
+        qDebug() << "calling repository->upsertCredentialRow for [group] " << m_currentGroupID
                  << ", edit cache: [content id]: " << m_editCache.content_id << ", [org_name]: " << m_editCache.org_name
                  << ", [username]: " << m_editCache.username << " [password]: " << m_editCache.password
                  << ", [email]: " << m_editCache.email << " [note]: " << m_editCache.note;
@@ -211,4 +238,5 @@ void VaultManager::submitField() {
     m_editRowIndex = -1;
     m_row = Credential{};
     m_editCache = Credential{};
+    qDebug() << "[VaultManager]: edit cache reset";
 }

@@ -39,8 +39,8 @@ signals:
     void groupCacheUpdated(QList<Group> &cache);
 
     void credentialCacheUpdated(QList<Credential> &cache);
-    void newCredentialRowAdded(Credential &credential);
-    void credentialRowUpdated(Credential &credential);
+    // void newCredentialRowAdded(Credential &credential);
+    // void credentialRowUpdated(Credential &credential);
     void credentialRowRemoved(int index);
 
     // to controller only

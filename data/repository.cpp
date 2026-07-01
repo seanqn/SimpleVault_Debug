@@ -117,21 +117,21 @@ void Repository::fetchCredentials(int groupID) {
 void Repository::upsertCredentialRow(int groupID, Credential &credential) {
     // if the contentID is 0 (default) then it is a new row
     // otherwise, the content id already exists in the table and the row is instead updated
-    Credential upsertedRow = m_db->upsertVaultRowEntry(groupID, credential);
+    int upsertedRowContentID = m_db->upsertVaultRowEntry(groupID, credential);
 
-    if (upsertedRow.content_id < 0) {
+    if (upsertedRowContentID < 0) {
         qDebug() << "[repository]: credential row could not be upserted.";
         return;
     }
 
-    if (credential.content_id != upsertedRow.content_id) {
+    if (credential.content_id != upsertedRowContentID) {
         qDebug() << "[repository]: credential row added in group " << groupID << ", content ID: " << upsertedRow.content_id;
-        emit newCredentialRowAdded(upsertedRow);
+        // emit newCredentialRowAdded(upsertedRow);
     }
     else {
         qDebug() << "[repository]: credential row updated in group " << groupID << ". (content ID [delivered]: "
-                 << credential.content_id << ") (content ID [retrieved]: " << upsertedRow.content_id << ")";
-        emit credentialRowUpdated(upsertedRow);
+                 << credential.content_id << ") (content ID [retrieved]: " << upsertedRowContentID << ")";
+        // emit credentialRowUpdated(upsertedRow);
     }
 }
 

@@ -21,7 +21,7 @@ public:
     QString fetchGroupName(int groupID);
     bool renameGroup(int groupID, const QString &newGroupName);
     bool removeGroup(int groupID);
-    Credential upsertVaultRowEntry(int currGroupID, const Credential &credential);
+    int upsertVaultRowEntry(int currGroupID, const Credential &credential);
     bool isDBConnected();
 
     // read operations specifically called by VaultManager to update the models

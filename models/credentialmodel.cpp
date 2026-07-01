@@ -35,7 +35,7 @@ void CredentialModel::syncNewRow(const Credential &row) {
     appendRow(row);
 }
 
-// is only called by the repository upserCredentialRow method if the row isn't new (content id != 0)
+// // is only called by the repository upserCredentialRow method if the row isn't new (content id != 0)
 void CredentialModel::updateRow(const Credential &row) {
     for (int i = 0; i < m_list.size(); ++i) {
         if (m_list[i].content_id == row.content_id) {

@@ -169,7 +169,7 @@ bool DB_LocalStorage::removeGroup(int groupID) {
 
 // vault content (credential) methods
 
-Credential DB_LocalStorage::upsertVaultRowEntry(int groupID, const Credential &credential) {
+int DB_LocalStorage::upsertVaultRowEntry(int groupID, const Credential &credential) {
     QSqlQuery _query(_db);
     bool insert = (credential.content_id <= 0);
 
@@ -195,21 +195,12 @@ Credential DB_LocalStorage::upsertVaultRowEntry(int groupID, const Credential &c
     _query.bindValue(":eml", credential.email);
     _query.bindValue(":nte", credential.note);
 
-    Credential row;
-
     if (!_query.exec()) {
         qDebug() << "db::upsertVaultRowEntry: " << _query.lastError();
-        row.content_id = -1;
-        return row;
+        return -1;
     }
 
-    row.content_id = insert ? _query.lastInsertId().toInt() : credential.content_id;
-    row.org_name = credential.org_name;
-    row.username = credential.username;
-    row.password = credential.password;
-    row.email = credential.email;
-    row.note = credential.note;
-    qDebug() << "db::upsertVaultRowEntry: upserted row: cid: " << row.content_id;
-    return row;
+    qDebug() << "db::upsertVaultRowEntry: upserted row: cid: " << _query.lastInsertId();
+    return _query.lastInsertId();
 }
 

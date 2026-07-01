@@ -2,6 +2,7 @@
 #define VAULTMANAGER_H
 
 #include <QObject>
+#include <QTimer>
 // MOC requires complete types in the header for classes in a Q_PROPERTY so no forward declaration for them
 #include "models/credentialmodel.h"
 #include "models/groupsmodel.h"
@@ -39,8 +40,12 @@ public:
     Q_INVOKABLE int getCurrentContentID() const { return m_currentContentID; }
     Q_INVOKABLE void startRowEdit(int rowIndex);
     Q_INVOKABLE int getEditRowIndex() const { return m_editRowIndex; }
-    Q_INVOKABLE void updateRowCacheField(const QString &role, const QString &value);
-    Q_INVOKABLE void submitField();
+    Q_INVOKABLE void updateEditCache(const QString &role, const QString &value);
+    Q_INVOKABLE void resetAutoSaveTimer();
+    Q_INVOKABLE void stopAutoSaveTimer();
+    void relayAutoSaveTimeout();
+    Q_INVOKABLE void commitEditCache();
+    Q_INVOKABLE void submitAndResetEditCache();
     Q_INVOKABLE bool editCacheIsEmpty();
     Q_INVOKABLE bool editCacheIsClean();
 
@@ -77,6 +82,7 @@ private:
     Credential m_row; // stores rows that already exist in the model
     Credential m_editCache; // stores currently edited row (at edit row index) and serves as a comparater to determine if the row actually need be submitted
     int m_editRowIndex = -1;
+    QTimer* m_autoSaveTimer = nullptr;
 };
 
 #endif // VAULTMANAGER_H
