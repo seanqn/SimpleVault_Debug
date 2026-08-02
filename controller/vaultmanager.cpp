@@ -26,7 +26,7 @@ VaultManager::VaultManager(QObject *parent, const QString &databaseName)
     m_autoSaveTimer = new QTimer(this);
     m_autoSaveTimer->setSingleShot(true);
     m_autoSaveTimer->setInterval(1500);
-    connect(m_autoSaveTimer, &QTimer::timeout, this, &VaultManager::commitEditCacheToDraft);
+    // connect(m_autoSaveTimer, &QTimer::timeout, this, &VaultManager::commitEditCacheToDraft);
     connect(m_autoSaveTimer, &QTimer::timeout, this, &VaultManager::relayAutoSaveTimeout);
 
     initRepository();
@@ -60,9 +60,9 @@ void VaultManager::createGroup(const QString &name) {
 }
 
 void VaultManager::selectGroup(int groupID) {
-    if (m_editRowIndex != -1) {
-        commitEditCacheToDraft();
-    }
+    // if (m_editRowIndex != -1) {
+    //     commitEditCacheToDraft();
+    // }
 
     m_repository->fetchCredentials(groupID);
     m_currentGroupID = groupID;
@@ -116,24 +116,36 @@ bool VaultManager::editCacheIsClean() {
     return isClean;
 }
 
+// DEBUG METHODS
+// DEBUG
+
 // per submitRow logic, a row that has been added without any changes made after editing is removed immediately
 // ideally starts editing after added, but cannot conflict with the startRowEdit logic (if m_editRowIndex is set here, any rows that were previously in edit will not be submitted and retain old values)
 // could pass the last model index to startRowEdit, but the active focus still needs to be true in QML
 void VaultManager::addDefaultCredentialRow() {
     // prevents another empty row from being added if an empty row already exists
-    int listSize = m_credentialModel->rowCount();
-    if (listSize > 0) {
-        if (m_credentialModel->getCredentialAt(listSize - 1).content_id == 0) {
-            qDebug() << "new row exists. no action done";
-            return;
-        }
+    // int listSize = m_credentialModel->rowCount();
+    // if (listSize > 0) {
+    //     if (m_credentialModel->getCredentialAt(listSize - 1).content_id == 0) {
+    //         qDebug() << "new row exists. no action done";
+    //         return;
+    //     }
+    // }
+
+    // indicates a default row has been added previously without any column changes, and we avoid more than 1 default row at a time
+    if (m_editRowIndex != -1 && editCacheIsEmpty()) {
+        return;
     }
 
-    if (m_editRowIndex != -1 && !(editCacheIsClean())) {
+    // indicates that a another row was previously in edit when this method was called, and we want to commit those changes and clear the edit cache
+    if (m_editRowIndex != -1 && !editCacheIsClean()) {
         submitAndResetEditCache();
     }
 
     Credential newRow{};
+
+    // new row key is created here as a 16 byte time-based uuid (must be 16 bytes to read as BLOB in db without conversion)
+    newRow.content_id = QUuid::createUuidV7().toRfc4122();
     m_credentialModel->appendRow(newRow);
 }
 
@@ -160,8 +172,8 @@ void VaultManager::startRowEdit(int rowIndex) {
     // stores the existing row fields before updating
     m_row = m_credentialModel->getCredentialAt(rowIndex);
     m_editCache = m_row;
-    m_currentContentID = m_row.content_id;
-    qDebug() << "[VaultManager]: starting edit for model row: " << m_editRowIndex << ", with content id: " << m_currentContentID;
+    m_currentContentID = QUuid::fromRfc4122(m_row.content_id).toString();
+    qDebug() << "[VaultManager]: starting edit for model row: " << m_editRowIndex << ", with content id: " << QUuid::fromRfc4122(m_row.content_id).toString();
 }
 
 void VaultManager::updateEditCache(const QString &role, const QString &value) {
@@ -209,10 +221,10 @@ void VaultManager::relayAutoSaveTimeout() {
     qDebug() << "[VaultManager]: autosave: timer timed out";
 }
 
-void VaultManager::commitEditCacheToDraft() {
-    // when a column has finished editing, commit to the draft
-    // the draft may be a separate file (JSON or other)
-}
+// void VaultManager::commitEditCacheToDraft() {
+//     // when a column has finished editing, commit to the draft
+//     // the draft may be a separate file (JSON or other)
+// }
 
 // called when the edit index has changed or active focus loss from editing row
 void VaultManager::submitAndResetEditCache() {
@@ -229,10 +241,11 @@ void VaultManager::submitAndResetEditCache() {
     }
     else {
         qDebug() << "calling repository->upsertCredentialRow for [group] " << m_currentGroupID
-                 << ", edit cache: [content id]: " << m_editCache.content_id << ", [org_name]: " << m_editCache.org_name
+                 << ", edit cache: [content id]: " << m_currentContentID << ", [org_name]: " << m_editCache.org_name
                  << ", [username]: " << m_editCache.username << " [password]: " << m_editCache.password
                  << ", [email]: " << m_editCache.email << " [note]: " << m_editCache.note;
         m_repository->upsertCredentialRow(m_currentGroupID, m_editCache);
+        m_credentialModel->updateRow(m_editRowIndex, m_editCache);
     }
 
     m_editRowIndex = -1;

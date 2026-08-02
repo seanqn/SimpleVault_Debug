@@ -2,6 +2,9 @@
 #define REPOSITORY_H
 
 #include <QObject>
+
+// used only for pushing mock rows, remove QUuid header after debugging
+#include <QUuid>
 #include "credentialtypes.h"
 
 class DB_LocalStorage;

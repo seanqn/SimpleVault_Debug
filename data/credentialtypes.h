@@ -14,7 +14,9 @@ public:
 
 struct Credential {
 public:
-    int content_id = 0;
+    // now storing content ids as (credentialtype: QByteArray=QUuid, database: BLOB) for safer id creation and keying
+    // creation is at VaultManager::addDefaultCredentialRow
+    QByteArray content_id;
     QString org_name;
     QString username;
     QString password;

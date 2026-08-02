@@ -28,7 +28,7 @@ public slots:
     void update(const QList<Credential> &credentials);
     void appendRow(const Credential &row = Credential{});
     // void syncNewRow(const Credential &row);
-    // void updateRow(const Credential &row);
+    void updateRow(int index, const Credential &row);
     void removeRow(int index);
 
 private:

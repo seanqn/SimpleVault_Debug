@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QTimer>
+#include <QUuid>
 // MOC requires complete types in the header for classes in a Q_PROPERTY so no forward declaration for them
 #include "models/credentialmodel.h"
 #include "models/groupsmodel.h"
@@ -17,7 +18,7 @@ class VaultManager : public QObject {
     Q_PROPERTY(CredentialModel* credentialModel READ credentialModel CONSTANT)
     Q_PROPERTY(GroupsModel* groupsModel READ groupsModel CONSTANT)
     Q_PROPERTY(int getCurrentGroupID READ getCurrentGroupID NOTIFY groupChanged)
-    Q_PROPERTY(int getCurrentContentID READ getCurrentContentID NOTIFY credentialRowChanged)
+    Q_PROPERTY(QString getCurrentContentID READ getCurrentContentID NOTIFY credentialRowChanged)
     // Q_PROPERTY(int getCredentialRowCount READ getCredentialRowCount)
 
 public:
@@ -37,14 +38,14 @@ public:
     Q_INVOKABLE void addDefaultCredentialRow();
     Q_INVOKABLE void selectCredentialRow(int rowIndex);
     // Q_INVOKABLE void removeCredentialRow();
-    Q_INVOKABLE int getCurrentContentID() const { return m_currentContentID; }
+    Q_INVOKABLE QString getCurrentContentID() const { return m_currentContentID; }
     Q_INVOKABLE void startRowEdit(int rowIndex);
     Q_INVOKABLE int getEditRowIndex() const { return m_editRowIndex; }
     Q_INVOKABLE void updateEditCache(const QString &role, const QString &value);
     Q_INVOKABLE void resetAutoSaveTimer();
     Q_INVOKABLE void stopAutoSaveTimer();
     void relayAutoSaveTimeout();
-    Q_INVOKABLE void commitEditCache();
+    // Q_INVOKABLE void commitEditCache();
     Q_INVOKABLE void submitAndResetEditCache();
     Q_INVOKABLE bool editCacheIsEmpty();
     Q_INVOKABLE bool editCacheIsClean();
@@ -78,7 +79,7 @@ private:
     CredentialModel* m_credentialModel;
     Repository* m_repository;
     int m_currentGroupID;
-    int m_currentContentID;
+    QString m_currentContentID;
     Credential m_row; // stores rows that already exist in the model
     Credential m_editCache; // stores currently edited row (at edit row index) and serves as a comparater to determine if the row actually need be submitted
     int m_editRowIndex = -1;

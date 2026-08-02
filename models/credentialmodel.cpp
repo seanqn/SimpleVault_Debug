@@ -1,4 +1,5 @@
 #include "credentialmodel.h"
+#include <QUuid>
 
 CredentialModel::CredentialModel(QObject *parent)
     : QAbstractListModel(parent) {}
@@ -8,6 +9,9 @@ void CredentialModel::update(const QList<Credential> &credentials) {
     beginResetModel();
     m_list = credentials;
     endResetModel();
+
+    // debug for mock row (index 0) only
+    qDebug() << "[Credential Model]::update: byteArray: " << credentials[0].content_id << ", string: " << QUuid::fromRfc4122(credentials[0].content_id).toString();
 }
 
 // only appends empty rows
@@ -22,30 +26,23 @@ basically just the updateRow method but for just added rows that are in edit
 intended to prevent double appends by the controller addDefaultCredentialRow method
 and the repository upsertCredentialRow method, both of which would call this appendRow sequentially
 */
-void CredentialModel::syncNewRow(const Credential &row) {
-    for (int i = 0; i < m_list.size(); ++i) {
-        if (m_list[i].content_id == 0) {
-            m_list[i] = row;
-            QModelIndex modelIndex = createIndex(i, 0);
-            emit dataChanged(modelIndex, modelIndex, {});
-            return;
-        }
-    }
+// void CredentialModel::syncNewRow(int index, const Credential &row) {
+//     if (m_list[index].content_id.isNull()) {
+//         m_list[index] = row;
+//         QModelIndex modelIndex = createIndex(index, 0);
+//         emit dataChanged(modelIndex, modelIndex, {});
+//         return;
+//     }
 
-    appendRow(row);
-}
+//     appendRow(row);
+// }
 
-// // is only called by the repository upserCredentialRow method if the row isn't new (content id != 0)
-void CredentialModel::updateRow(const Credential &row) {
-    for (int i = 0; i < m_list.size(); ++i) {
-        if (m_list[i].content_id == row.content_id) {
-            m_list[i] = row;
-            QModelIndex modelIndex = createIndex(i, 0);
-            // third argument left as empty vector to signify (potentially) all roles have changed
-            emit dataChanged(modelIndex, modelIndex, {});
-            return;
-        }
-    }
+void CredentialModel::updateRow(int index, const Credential &row) {
+    m_list[index] = row;
+    qDebug() << "[Credential Model]::updateRow: content_id? " << QUuid::fromRfc4122(row.content_id).toString();
+    QModelIndex modelIndex = createIndex(index, 0);
+    // third argument left as empty vector to signify (potentially) all roles have changed
+    emit dataChanged(modelIndex, modelIndex, {});
 }
 
 void CredentialModel::removeRow(int index) {
@@ -65,7 +62,7 @@ QVariant CredentialModel::data(const QModelIndex &index, int role) const {
 
     switch (role) {
     case ContentIDRole:
-        return credential.content_id;
+        return QUuid::fromRfc4122(credential.content_id).toString();
     case OrganizationRole:
         return credential.org_name;
     case UsernameRole:

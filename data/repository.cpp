@@ -20,7 +20,8 @@ void Repository::mockCredentialRow() {
     // group id, organization, username, pasword, email, additional optional notes
     int groupID = 1;
     Credential mockRow;
-    qDebug() << "[repository]: calling mockCredentialRow for group " << groupID << ", content id: " << mockRow.content_id;
+    mockRow.content_id = QUuid::createUuidV7().toRfc4122();
+    qDebug() << "[repository]: calling mockCredentialRow for group " << groupID << ", content id: " << QUuid::fromRfc4122(mockRow.content_id).toString();
     mockRow.org_name = "mock_org";
     mockRow.username = "mock_user";
     mockRow.password = "mock_pass";
@@ -93,7 +94,7 @@ void Repository::fetchCredentials(int groupID) {
         {"content_id", "org_name", "username", "password", "email", "note"},
         [](auto mapper) {
             Credential c;
-            c.content_id = mapper("content_id").toInt();
+            c.content_id = mapper("content_id").toByteArray();
             c.org_name = mapper("org_name").toString();
             c.username = mapper("username").toString();
             c.password = mapper("password").toString();
@@ -117,22 +118,14 @@ void Repository::fetchCredentials(int groupID) {
 void Repository::upsertCredentialRow(int groupID, Credential &credential) {
     // if the contentID is 0 (default) then it is a new row
     // otherwise, the content id already exists in the table and the row is instead updated
-    int upsertedRowContentID = m_db->upsertVaultRowEntry(groupID, credential);
+    bool upsertedRowContentID = m_db->upsertVaultRowEntry(groupID, credential);
 
-    if (upsertedRowContentID < 0) {
+    if (!upsertedRowContentID) {
         qDebug() << "[repository]: credential row could not be upserted.";
         return;
     }
 
-    if (credential.content_id != upsertedRowContentID) {
-        qDebug() << "[repository]: credential row added in group " << groupID << ", content ID: " << upsertedRow.content_id;
-        // emit newCredentialRowAdded(upsertedRow);
-    }
-    else {
-        qDebug() << "[repository]: credential row updated in group " << groupID << ". (content ID [delivered]: "
-                 << credential.content_id << ") (content ID [retrieved]: " << upsertedRowContentID << ")";
-        // emit credentialRowUpdated(upsertedRow);
-    }
+    qDebug() << "[repository]: credential row successfully upserted";
 }
 
 // called when an entire entry is removed

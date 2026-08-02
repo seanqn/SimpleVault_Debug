@@ -2,6 +2,7 @@
 #include <QDebug>
 #include <QStandardPaths>
 #include <QDir>
+#include <QUuid>
 
 // groups and vault content tables could be consolidated, only content model is needed
 
@@ -73,14 +74,13 @@ bool DB_LocalStorage::initDB() {
     // vault_content table
     _query.exec("CREATE TABLE IF NOT EXISTS vault_content ( "
                    "group_id INTEGER, "
-                   "content_id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                   "content_id BLOB PRIMARY KEY, "
                    "org_name TEXT, "
                    "username TEXT, "
                    "password TEXT, "
                    "email TEXT, "
                    "note TEXT, "
-                   "FOREIGN KEY(group_id) REFERENCES groups(id) ON DELETE CASCADE)");
-
+                   "FOREIGN KEY(group_id) REFERENCES groups(id) ON DELETE CASCADE) WITHOUT ROWID");
 
     m_connected = true;
     emit startDBConnectionSuccess();
@@ -169,25 +169,61 @@ bool DB_LocalStorage::removeGroup(int groupID) {
 
 // vault content (credential) methods
 
-int DB_LocalStorage::upsertVaultRowEntry(int groupID, const Credential &credential) {
+// saved this method
+// int DB_LocalStorage::upsertVaultRowEntry(int groupID, const Credential &credential) {
+//     QSqlQuery _query(_db);
+//     // no longer stored as int, need to validate BLOB
+//     bool insert = (credential.content_id <= 0);
+
+//     if (insert) {
+//         _query.prepare("INSERT INTO vault_content (group_id, org_name, username, password, email, note) "
+//                        "VALUES (:gid, :org, :usr, :pw, :eml, :nte)");
+//     }
+//     else {
+//         _query.prepare("UPDATE vault_content SET "
+//                        "org_name = :org, "
+//                        "username = :usr, "
+//                        "password = :pw, "
+//                        "email = :eml, "
+//                        "note = :nte "
+//                        "WHERE group_id = :gid AND content_id = :cid");
+//         _query.bindValue(":cid", credential.content_id);
+//     }
+
+//     _query.bindValue(":gid", groupID);
+//     _query.bindValue(":org", credential.org_name);
+//     _query.bindValue(":usr", credential.username);
+//     _query.bindValue(":pw", credential.password);
+//     _query.bindValue(":eml", credential.email);
+//     _query.bindValue(":nte", credential.note);
+
+//     if (!_query.exec()) {
+//         qDebug() << "db::upsertVaultRowEntry: " << _query.lastError();
+//         return -1;
+//     }
+
+//     qDebug() << "db::upsertVaultRowEntry: upserted row: cid: " << _query.lastInsertId();
+//     return _query.lastInsertId();
+// }
+
+bool DB_LocalStorage::upsertVaultRowEntry(int groupID, const Credential &credential) {
     QSqlQuery _query(_db);
-    bool insert = (credential.content_id <= 0);
 
-    if (insert) {
-        _query.prepare("INSERT INTO vault_content (group_id, org_name, username, password, email, note) "
-                       "VALUES (:gid, :org, :usr, :pw, :eml, :nte)");
-    }
-    else {
-        _query.prepare("UPDATE vault_content SET "
-                       "org_name = :org, "
-                       "username = :usr, "
-                       "password = :pw, "
-                       "email = :eml, "
-                       "note = :nte "
-                       "WHERE group_id = :gid AND content_id = :cid");
-        _query.bindValue(":cid", credential.content_id);
-    }
+    qDebug() << "[db]: content_id prior to query: " << QUuid::fromRfc4122(credential.content_id).toString();
+    _query.prepare(
+        "INSERT INTO vault_content (content_id, group_id, org_name, username, password, email, note) "
+        "VALUES (:cid, :gid, :org, :usr, :pw, :eml, :nte) "
+        "ON CONFLICT(content_id) DO UPDATE SET "
+        "group_id = excluded.group_id, "
+        "org_name = excluded.org_name, "
+        "username = excluded.username, "
+        "password = excluded.password, "
+        "email = excluded.email, "
+        "note = excluded.note "
+        "RETURNING content_id"
+    );
 
+    _query.bindValue(":cid", credential.content_id);
     _query.bindValue(":gid", groupID);
     _query.bindValue(":org", credential.org_name);
     _query.bindValue(":usr", credential.username);
@@ -195,12 +231,23 @@ int DB_LocalStorage::upsertVaultRowEntry(int groupID, const Credential &credenti
     _query.bindValue(":eml", credential.email);
     _query.bindValue(":nte", credential.note);
 
-    if (!_query.exec()) {
-        qDebug() << "db::upsertVaultRowEntry: " << _query.lastError();
-        return -1;
+    if (_query.exec()) {
+        while (_query.next()) {
+            QByteArray cid = _query.value("content_id").toByteArray();
+            qDebug() << "[db]: content_id check: " << QUuid::fromRfc4122(cid).toString();
+        }
+        return true;
     }
 
-    qDebug() << "db::upsertVaultRowEntry: upserted row: cid: " << _query.lastInsertId();
-    return _query.lastInsertId();
-}
+    // if (!_query.exec()) {
+    //     qCritical() << "db::upsertVaultRowEntry Failed: " << _query.lastError();
+    //     return false;
+    // }
 
+    // while (_query.next()) {
+    //     QByteArray cid = _query.value("content_id").toByteArray();
+    //     qDebug() << "[db]: content_id check: " << QUuid::fromRfc4122(cid).toString();
+    // }
+
+    return false;
+}
