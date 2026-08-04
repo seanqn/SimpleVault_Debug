@@ -116,8 +116,6 @@ void Repository::fetchCredentials(int groupID) {
 }
 
 void Repository::upsertCredentialRow(int groupID, Credential &credential) {
-    // if the contentID is 0 (default) then it is a new row
-    // otherwise, the content id already exists in the table and the row is instead updated
     bool upsertedRowContentID = m_db->upsertVaultRowEntry(groupID, credential);
 
     if (!upsertedRowContentID) {

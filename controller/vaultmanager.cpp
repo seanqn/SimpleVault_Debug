@@ -20,8 +20,6 @@ VaultManager::VaultManager(QObject *parent, const QString &databaseName)
 
     m_credentialModel = new CredentialModel(this);
     connect(m_repository, &Repository::credentialCacheUpdated, m_credentialModel, &CredentialModel::update);
-    // connect(m_repository, &Repository::newCredentialRowAdded, m_credentialModel, &CredentialModel::syncNewRow);
-    // connect(m_repository, &Repository::credentialRowUpdated, m_credentialModel, &CredentialModel::updateRow);
 
     m_autoSaveTimer = new QTimer(this);
     m_autoSaveTimer->setSingleShot(true);
@@ -32,13 +30,20 @@ VaultManager::VaultManager(QObject *parent, const QString &databaseName)
     initRepository();
 }
 
+VaultManager::~VaultManager() {
+    if (m_editRowIndex != -1 && !editCacheIsEmpty() && !editCacheIsClean()) {
+        submitAndResetEditCache();
+    }
+}
+
 void VaultManager::initRepository() {
     if (!m_repository->initDatabase())  {
         emit repositoryInitializationError();
         return;
     }
     m_repository->mockCredentialRow();
-    updateGroups();
+    m_repository->fetchGroups();
+    // updateGroups();
 }
 
 /*
@@ -46,9 +51,9 @@ groups model management methods
 */
 
 // ideally should only be called by the constructor and other members
-void VaultManager::updateGroups() {
-    m_repository->fetchGroups();
-}
+// void VaultManager::updateGroups() {
+//     m_repository->fetchGroups();
+// }
 
 // database write entry is added to database and only appended to the cache
 void VaultManager::createGroup(const QString &name) {
@@ -63,6 +68,11 @@ void VaultManager::selectGroup(int groupID) {
     // if (m_editRowIndex != -1) {
     //     commitEditCacheToDraft();
     // }
+
+    // ensure that the edit cache is reset before group switching
+    if (m_editRowIndex != -1 && !editCacheIsEmpty() && !editCacheIsClean()) {
+        submitAndResetEditCache();
+    }
 
     m_repository->fetchCredentials(groupID);
     m_currentGroupID = groupID;

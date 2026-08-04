@@ -23,10 +23,11 @@ class VaultManager : public QObject {
 
 public:
     explicit VaultManager(QObject* parent = nullptr, const QString &databaseName="SimpleVault");
+    ~VaultManager();
     GroupsModel* groupsModel() const { return m_groupsModel; }
     CredentialModel* credentialModel() const { return m_credentialModel; }
     void initRepository();
-    void updateGroups();
+    // void updateGroups();
 
     Q_INVOKABLE void createGroup(const QString &name);
     Q_INVOKABLE void selectGroup(int groupID);

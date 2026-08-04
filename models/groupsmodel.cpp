@@ -19,6 +19,7 @@ void GroupsModel::append(Group &group) {
 }
 
 // replacement is only relevant to a groups Group.name member
+// TODO: update rename method to accept index for instant lookup
 void GroupsModel::rename(int id, const QString &name) {
     for (int i = 0; i < m_list.size(); ++i) {
         if (m_list[i].id == id) {
@@ -31,7 +32,7 @@ void GroupsModel::rename(int id, const QString &name) {
 }
 
 void GroupsModel::remove(int index) {
-    // index could not out of range, standard guard
+    // index could not be out of range, standard guard
     if (index < 0 || index >= m_list.size()) {
         return;
     }
