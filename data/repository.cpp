@@ -15,10 +15,19 @@ bool Repository::initDatabase() {
     return m_db->initDB();
 }
 
+void Repository::mockGroup() {
+    Group mockGroup;
+    mockGroup.id = QUuid::createUuidV7().toRfc4122();
+    mockGroup.name = "mock_group_1";
+    if (m_db->addGroup(mockGroup)) {
+        mockCredentialRow(mockGroup.id);
+        return;
+    }
+}
+
 // adds mock credential row to test fetching
-void Repository::mockCredentialRow() {
+void Repository::mockCredentialRow(QByteArray groupID) {
     // group id, organization, username, pasword, email, additional optional notes
-    int groupID = 1;
     Credential mockRow;
     mockRow.content_id = QUuid::createUuidV7().toRfc4122();
     qDebug() << "[repository]: calling mockCredentialRow for group " << groupID << ", content id: " << QUuid::fromRfc4122(mockRow.content_id).toString();
@@ -30,15 +39,14 @@ void Repository::mockCredentialRow() {
     upsertCredentialRow(groupID, mockRow);
 }
 
-bool Repository::addGroup(const QString &groupName) {
-    Group newGroup = m_db->addGroup(groupName);
-    qDebug() << "[repository]: new group struct: [id]: " << newGroup.id << " [name]: " << newGroup.name << "[created_at]: " << newGroup.created_at;
-    if (newGroup.id == 0) {
-        return false;
+bool Repository::addGroup(const Group &group) {
+    if (m_db->addGroup(group)) {
+        qDebug() << "[repository]: new group struct: [id]: " << group.id << " [name]: " << group.name << "[created_at]: " << group.created_at;
+        emit groupEntryAdded(group);
+        return true;
     }
 
-    emit groupEntryAdded(newGroup);
-    return true;
+    return false;
 }
 
 // the only method where the cache is implemented is for the purpose of overwriting the group model's internal list
@@ -49,7 +57,7 @@ void Repository::fetchGroups() {
         {"id", "name", "created_at"},
         [](auto mapper) {
             Group g;
-            g.id = mapper("id").toInt();
+            g.id = mapper("id").toByteArray();
             g.name = mapper("name").toString();
             g.created_at = mapper("created_at").toDateTime();
             return g;
@@ -57,29 +65,27 @@ void Repository::fetchGroups() {
     );
 
     if (m_groupCache.isEmpty()) {
-        emit groupCacheEmpty();
         qDebug() << "[repository]: group cache was empty";
         return;
     }
 
     emit groupCacheUpdated(m_groupCache);
     qDebug() << "[repository]: group cache was updated with the items from database";
+    m_groupCache.clear();
 }
 
-bool Repository::renameGroup(int groupID, const QString &newName) {
+bool Repository::renameGroup(QByteArray groupID, const QString &newName) {
     if (!(m_db->renameGroup(groupID, newName))) {
         return false;
     }
 
-    emit groupEntryRenamed(groupID, newName);
     return true;
 }
 
 // based on the foreign key groups id = vault_content group_id, removal of a group is expected to cascade to all associated credentials
 // requires a return that is passed along to the controller to update the groups model
-bool Repository::removeGroup(int index, int groupID) {
+bool Repository::removeGroup(QByteArray groupID) {
     if (m_db->removeGroup(groupID)) {
-        emit groupEntryRemoved(index);
         return true;
     }
 
@@ -87,9 +93,9 @@ bool Repository::removeGroup(int index, int groupID) {
 }
 
 // lambda effectively passes a template type Mapping object to the required paramater
-void Repository::fetchCredentials(int groupID) {
+void Repository::fetchCredentials(QByteArray groupID) {
     qDebug() << "[repository]: fetching credentials";
-    QList<Credential> m_credentialCache = m_db->fetchRecords<Credential>(
+    m_credentialCache = m_db->fetchRecords<Credential>(
         "vault_content",
         {"content_id", "org_name", "username", "password", "email", "note"},
         [](auto mapper) {
@@ -107,15 +113,16 @@ void Repository::fetchCredentials(int groupID) {
     );
 
     if (m_credentialCache.isEmpty()) {
-        emit credentialCacheEmpty();
         qDebug() << "[repository]: credential cache was empty";
+        return;
     }
 
     emit credentialCacheUpdated(m_credentialCache);
     qDebug() << "[repository]: credential cache was updated with items from database";
+    m_credentialCache.clear();
 }
 
-void Repository::upsertCredentialRow(int groupID, Credential &credential) {
+void Repository::upsertCredentialRow(QByteArray groupID, Credential &credential) {
     bool upsertedRowContentID = m_db->upsertVaultRowEntry(groupID, credential);
 
     if (!upsertedRowContentID) {
@@ -127,6 +134,6 @@ void Repository::upsertCredentialRow(int groupID, Credential &credential) {
 }
 
 // called when an entire entry is removed
-void Repository::removeCredentialRow(int groupID, int contentID) {
+void Repository::removeCredentialRow(QByteArray groupID, QByteArray contentID) {
 
 }

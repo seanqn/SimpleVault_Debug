@@ -17,11 +17,10 @@ public:
 
     bool initDB();
     void closeDB();
-    Group addGroup(const QString &groupName);
-    QString fetchGroupName(int groupID);
-    bool renameGroup(int groupID, const QString &newGroupName);
-    bool removeGroup(int groupID);
-    bool upsertVaultRowEntry(int currGroupID, const Credential &credential);
+    bool addGroup(const Group &group);
+    bool renameGroup(QByteArray groupID, const QString &newGroupName);
+    bool removeGroup(QByteArray groupID);
+    bool upsertVaultRowEntry(QByteArray groupID, const Credential &credential);
     bool isDBConnected();
 
     // read operations specifically called by VaultManager to update the models

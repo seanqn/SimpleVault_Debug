@@ -10,18 +10,19 @@ class GroupsModel : public QAbstractListModel {
 public:
     explicit GroupsModel(QObject *parent = nullptr);
     enum GroupRoles {
-        IDRole = Qt::UserRole,
+        IDRole,
         GroupNameRole,
         CreatedAtRole
     };
     QHash<int, QByteArray> roleNames() const override;
-    QVariant data(const QModelIndex &index, int role=Qt::DisplayRole) const override;
+    QVariant data(const QModelIndex &index, int role) const override;
     int rowCount(const QModelIndex &parent = QModelIndex()) const override { return m_list.size(); }
+    QByteArray getGroupIDAt(int rowIndex);
 
 public slots:
-    void update(QList<Group> &groups);
-    void append(Group &group);
-    void rename(int id, const QString &name);
+    void update(const QList<Group> &groups);
+    void append(const Group &group);
+    void rename(int index, const QString &name);
     void remove(int index);
 
 private:

@@ -68,12 +68,12 @@ bool DB_LocalStorage::initDB() {
     // _query.exec("PRAGMA foreign_keys = ON;");
     // groups table
     _query.exec("CREATE TABLE IF NOT EXISTS groups ( "
-                   "id INTEGER PRIMARY KEY AUTOINCREMENT, "
-                   "name TEXT NOT NULL UNIQUE, "
+                   "id BLOB PRIMARY KEY, "
+                   "name TEXT NOT NULL, "
                    "created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
     // vault_content table
     _query.exec("CREATE TABLE IF NOT EXISTS vault_content ( "
-                   "group_id INTEGER, "
+                   "group_id BLOB, "
                    "content_id BLOB PRIMARY KEY, "
                    "org_name TEXT, "
                    "username TEXT, "
@@ -100,49 +100,29 @@ void DB_LocalStorage::closeDB() {
 
 // group methods
 
-Group DB_LocalStorage::addGroup(const QString &groupName) {
-    Group newGroup;
+bool DB_LocalStorage::addGroup(const Group &group) {
     if (!m_connected || !_db.isOpen()) {
-        return newGroup;
+        return false;
     }
 
     QSqlQuery _query(_db);
-    _query.prepare("INSERT INTO groups (name) VALUES (:name)");
-    _query.bindValue(":name", groupName);
-    // slug will reference url path in-app (i.e. home/my_vault/)
-    // _query.bindValue(":slug", slugToBeAdded)
+    _query.prepare("INSERT INTO groups (id, name) VALUES (:id, :name)");
+    _query.bindValue(":id", group.id);
+    _query.bindValue(":name", group.name);
     if (!_query.exec()) {
+        qCritical() << "[database]: add group failed: " << _query.lastError();
         emit databaseQueryError(_query.lastError());
-        return newGroup;
+        return false;
     }
 
     emit databaseQuerySuccess();
-
-    newGroup.id = _query.lastInsertId().toInt();
-    newGroup.name = groupName;
-    newGroup.created_at = QDateTime::currentDateTime();
-
-    return newGroup;
+    return true;
 }
 
-// returns the group name that matches the given group id
-// primarily for debugging
-QString DB_LocalStorage::fetchGroupName(int groupID) {
-    QSqlQuery _query(_db);
-    _query.prepare("SELECT name FROM groups WHERE id = :groupID");
-    _query.bindValue(":groupID", groupID);
-    if (_query.exec() && _query.next()) {
-        return _query.value(0).toString();
-    }
-
-    return QString();
-}
-
-bool DB_LocalStorage::renameGroup(int groupID, const QString &newGroupName) {
+bool DB_LocalStorage::renameGroup(QByteArray groupID, const QString &newGroupName) {
     QSqlQuery _query(_db);
     _query.prepare("UPDATE groups SET name = :newName WHERE id = :groupID");
     _query.bindValue(":newName", newGroupName);
-    _query.bindValue(":groupID", groupID);
     if (!_query.exec()) {
         emit databaseQueryError(_query.lastError());
         return false;
@@ -154,7 +134,7 @@ bool DB_LocalStorage::renameGroup(int groupID, const QString &newGroupName) {
 
 // _query that removes an entire group: called when a user deletes a group through qml interaction
 // foreign keyed group_id in vault_content should have associated rows removed
-bool DB_LocalStorage::removeGroup(int groupID) {
+bool DB_LocalStorage::removeGroup(QByteArray groupID) {
     QSqlQuery _query(_db);
     _query.prepare("DELETE FROM groups WHERE id = :groupID");
     _query.bindValue(":groupID", groupID);
@@ -206,10 +186,8 @@ bool DB_LocalStorage::removeGroup(int groupID) {
 //     return _query.lastInsertId();
 // }
 
-bool DB_LocalStorage::upsertVaultRowEntry(int groupID, const Credential &credential) {
+bool DB_LocalStorage::upsertVaultRowEntry(QByteArray groupID, const Credential &credential) {
     QSqlQuery _query(_db);
-
-    qDebug() << "[db]: content_id prior to query: " << QUuid::fromRfc4122(credential.content_id).toString();
     _query.prepare(
         "INSERT INTO vault_content (content_id, group_id, org_name, username, password, email, note) "
         "VALUES (:cid, :gid, :org, :usr, :pw, :eml, :nte) "
@@ -231,23 +209,11 @@ bool DB_LocalStorage::upsertVaultRowEntry(int groupID, const Credential &credent
     _query.bindValue(":eml", credential.email);
     _query.bindValue(":nte", credential.note);
 
-    if (_query.exec()) {
-        while (_query.next()) {
-            QByteArray cid = _query.value("content_id").toByteArray();
-            qDebug() << "[db]: content_id check: " << QUuid::fromRfc4122(cid).toString();
-        }
-        return true;
+
+    if (!_query.exec()) {
+        qCritical() << "db::upsertVaultRowEntry Failed: " << _query.lastError();
+        return false;
     }
 
-    // if (!_query.exec()) {
-    //     qCritical() << "db::upsertVaultRowEntry Failed: " << _query.lastError();
-    //     return false;
-    // }
-
-    // while (_query.next()) {
-    //     QByteArray cid = _query.value("content_id").toByteArray();
-    //     qDebug() << "[db]: content_id check: " << QUuid::fromRfc4122(cid).toString();
-    // }
-
-    return false;
+    return true;
 }

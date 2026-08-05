@@ -7,7 +7,7 @@
 // outlines the schema for groups and credentials in database
 struct Group {
 public:
-    int id = 0;
+    QByteArray id;
     QString name;
     QDateTime created_at;
 };

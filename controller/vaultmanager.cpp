@@ -1,37 +1,23 @@
 #include "vaultmanager.h"
 #include "data/repository.h"
 
-// TODO: CredentialModel and Repository incomplete
-
-// TODO: QSortFilterProxyModel can filter vault content based on group_id via the groups model without needing to restructure how the data is retrieved from the repository
-
 VaultManager::VaultManager(QObject *parent, const QString &databaseName)
     : QObject(parent) {
 
     m_repository = new Repository(this, databaseName);
-    connect(m_repository, &Repository::groupCacheEmpty, this, &VaultManager::repositoryGroupCacheEmpty);
-    connect(m_repository, &Repository::credentialCacheEmpty, this, &VaultManager::repositoryCredentialCacheEmpty);
 
     m_groupsModel = new GroupsModel(this);
     connect(m_repository, &Repository::groupCacheUpdated, m_groupsModel, &GroupsModel::update);
     connect(m_repository, &Repository::groupEntryAdded, m_groupsModel, &GroupsModel::append);
-    connect(m_repository, &Repository::groupEntryRemoved, m_groupsModel, &GroupsModel::remove);
-    connect(m_repository, &Repository::groupEntryRenamed, m_groupsModel, &GroupsModel::rename);
 
     m_credentialModel = new CredentialModel(this);
     connect(m_repository, &Repository::credentialCacheUpdated, m_credentialModel, &CredentialModel::update);
-
-    m_autoSaveTimer = new QTimer(this);
-    m_autoSaveTimer->setSingleShot(true);
-    m_autoSaveTimer->setInterval(1500);
-    // connect(m_autoSaveTimer, &QTimer::timeout, this, &VaultManager::commitEditCacheToDraft);
-    connect(m_autoSaveTimer, &QTimer::timeout, this, &VaultManager::relayAutoSaveTimeout);
 
     initRepository();
 }
 
 VaultManager::~VaultManager() {
-    if (m_editRowIndex != -1 && !editCacheIsEmpty() && !editCacheIsClean()) {
+    if (m_editRowIndex != -1) {
         submitAndResetEditCache();
     }
 }
@@ -41,7 +27,7 @@ void VaultManager::initRepository() {
         emit repositoryInitializationError();
         return;
     }
-    m_repository->mockCredentialRow();
+    m_repository->mockGroup();
     m_repository->fetchGroups();
     // updateGroups();
 }
@@ -50,39 +36,45 @@ void VaultManager::initRepository() {
 groups model management methods
 */
 
-// ideally should only be called by the constructor and other members
-// void VaultManager::updateGroups() {
-//     m_repository->fetchGroups();
-// }
-
-// database write entry is added to database and only appended to the cache
+// group object instantiation lives here for now
 void VaultManager::createGroup(const QString &name) {
-    if (m_repository->addGroup(name)) {
+    Group newGroup;
+    newGroup.id = QUuid::createUuidV7().toRfc4122();
+    newGroup.name = name;
+    newGroup.created_at = QDateTime::currentDateTime();
+    if (m_repository->addGroup(newGroup)) {
         return;
     }
 
     emit createGroupError();
 }
 
-void VaultManager::selectGroup(int groupID) {
-    // if (m_editRowIndex != -1) {
-    //     commitEditCacheToDraft();
-    // }
-
+void VaultManager::selectGroup(int index) {
     // ensure that the edit cache is reset before group switching
-    if (m_editRowIndex != -1 && !editCacheIsEmpty() && !editCacheIsClean()) {
+    if (m_editRowIndex != -1) {
         submitAndResetEditCache();
     }
 
-    m_repository->fetchCredentials(groupID);
-    m_currentGroupID = groupID;
-    emit groupChanged(m_currentGroupID);
+    QByteArray gid = m_groupsModel->getGroupIDAt(index);
+    if (gid.isEmpty()) {
+        qDebug() << "[Vault Manager]: selectGroup: group list index out of range";
+        return;
+    }
+
+    m_repository->fetchCredentials(gid);
+    m_currentGroupID = gid;
+    emit groupChanged(QUuid::fromRfc4122(gid).toString());
 }
 
-// rename will be selected via a right-click context menu option, which is not necessarily reflective of the current (double-click selected) group id
-// QML will know what group is actually in context since it will be assigned as the current index, and then gets the group id at that index so that it is updated in the database
-void VaultManager::renameGroup(int groupID, const QString &newName) {
-    if (m_repository->renameGroup(groupID, newName)) {
+void VaultManager::renameGroup(int index, const QString &newName) {
+    QByteArray gid = m_groupsModel->getGroupIDAt(index);
+    if (gid.isEmpty()) {
+        qDebug() << "[Vault Manager]: renameGroup: group list index out of range";
+        return;
+    }
+
+    if (m_repository->renameGroup(gid, newName)) {
+        m_groupsModel->rename(index, newName);
         emit groupRenamed(newName);
         return;
     }
@@ -90,15 +82,21 @@ void VaultManager::renameGroup(int groupID, const QString &newName) {
     emit groupRenameError();
 }
 
-void VaultManager::removeGroup(int index, int groupID) {
-    if (m_repository->removeGroup(index, groupID)) {
-        emit groupRemoved(groupID);
-        m_currentGroupID = 0;
-        emit groupChanged(m_currentGroupID);
+void VaultManager::removeGroup(int index) {
+    QByteArray gid = m_groupsModel->getGroupIDAt(index);
+    if (gid.isEmpty()) {
+        qDebug() << "[Vault Manager]: removeGroup: group list index out of range";
         return;
     }
 
-    emit groupRemoveError(groupID);
+    if (m_repository->removeGroup(gid)) {
+        m_groupsModel->remove(index);
+        emit groupRemoved(QUuid::fromRfc4122(gid).toString());
+        m_currentGroupID.clear();
+        return;
+    }
+
+    emit groupRemoveError(QUuid::fromRfc4122(gid).toString());
 }
 
 /*
@@ -106,7 +104,6 @@ credential model management methods
 */
 
 // invokable edit cache verification methods
-// credentialRowIsEmpty tracks either a default row that was submitted without any changes or a row where all fields were cleared
 bool VaultManager::editCacheIsEmpty() {
     bool isEmpty = m_editCache.org_name.isEmpty() &&
                    m_editCache.username.isEmpty() &&
@@ -116,7 +113,6 @@ bool VaultManager::editCacheIsEmpty() {
     return isEmpty;
 }
 
-// credentialRowIsClean tracks any diffs
 bool VaultManager::editCacheIsClean() {
     bool isClean = (m_editCache.org_name == m_row.org_name &&
                     m_editCache.username == m_row.username &&
@@ -126,28 +122,13 @@ bool VaultManager::editCacheIsClean() {
     return isClean;
 }
 
-// DEBUG METHODS
-// DEBUG
-
-// per submitRow logic, a row that has been added without any changes made after editing is removed immediately
-// ideally starts editing after added, but cannot conflict with the startRowEdit logic (if m_editRowIndex is set here, any rows that were previously in edit will not be submitted and retain old values)
-// could pass the last model index to startRowEdit, but the active focus still needs to be true in QML
+// credential object instantation lives here for now
 void VaultManager::addDefaultCredentialRow() {
-    // prevents another empty row from being added if an empty row already exists
-    // int listSize = m_credentialModel->rowCount();
-    // if (listSize > 0) {
-    //     if (m_credentialModel->getCredentialAt(listSize - 1).content_id == 0) {
-    //         qDebug() << "new row exists. no action done";
-    //         return;
-    //     }
-    // }
-
-    // indicates a default row has been added previously without any column changes, and we avoid more than 1 default row at a time
-    if (m_editRowIndex != -1 && editCacheIsEmpty()) {
+    // TODO: allow new rows as long as text for one column in the previous default row has been changed
+    if (defaultRowNotSubmitted) {
         return;
     }
 
-    // indicates that a another row was previously in edit when this method was called, and we want to commit those changes and clear the edit cache
     if (m_editRowIndex != -1 && !editCacheIsClean()) {
         submitAndResetEditCache();
     }
@@ -157,6 +138,7 @@ void VaultManager::addDefaultCredentialRow() {
     // new row key is created here as a 16 byte time-based uuid (must be 16 bytes to read as BLOB in db without conversion)
     newRow.content_id = QUuid::createUuidV7().toRfc4122();
     m_credentialModel->appendRow(newRow);
+    defaultRowNotSubmitted = true;
 }
 
 void VaultManager::selectCredentialRow(int rowIndex) {
@@ -169,7 +151,6 @@ void VaultManager::startRowEdit(int rowIndex) {
         return;
     }
 
-    // prevents submitting the row when switching to different columns in the same row
     if (m_editRowIndex == rowIndex) return;
 
     // this method can be called directly by QML so this guard catches if another row was in edit and did not submit
@@ -182,7 +163,7 @@ void VaultManager::startRowEdit(int rowIndex) {
     // stores the existing row fields before updating
     m_row = m_credentialModel->getCredentialAt(rowIndex);
     m_editCache = m_row;
-    m_currentContentID = QUuid::fromRfc4122(m_row.content_id).toString();
+    m_currentContentID = m_row.content_id;
     qDebug() << "[VaultManager]: starting edit for model row: " << m_editRowIndex << ", with content id: " << QUuid::fromRfc4122(m_row.content_id).toString();
 }
 
@@ -212,36 +193,11 @@ void VaultManager::updateEditCache(const QString &role, const QString &value) {
     qDebug() << "[VaultManager]: updatedRowCacheField updated role " << role << " to " << value;
 }
 
-// when a single column has finished editing, reset the timer
-void VaultManager::resetAutoSaveTimer() {
-    if (m_editRowIndex != -1) {
-        m_autoSaveTimer->start();
-        qDebug() << "[VaultManager]: autosave: timer start/reset";
-    }
-}
-
-void VaultManager::stopAutoSaveTimer() {
-    if (m_autoSaveTimer->isActive()) {
-        m_autoSaveTimer->stop();
-        qDebug() << "[VaultManager]: autosave: timer force stopped";
-    }
-}
-
-void VaultManager::relayAutoSaveTimeout() {
-    qDebug() << "[VaultManager]: autosave: timer timed out";
-}
-
-// void VaultManager::commitEditCacheToDraft() {
-//     // when a column has finished editing, commit to the draft
-//     // the draft may be a separate file (JSON or other)
-// }
-
 // called when the edit index has changed or active focus loss from editing row
 void VaultManager::submitAndResetEditCache() {
     if (m_editRowIndex == -1) return;
 
     qDebug() << "[VaultManager]: performing submit and reset edit cache";
-    // the timer will submit row if hits timeout, but manually stopping timer requires manual submission
     if (editCacheIsEmpty()) {
         m_credentialModel->removeRow(m_editRowIndex);
         qDebug() << "all values in row cache are empty after editing, new row has been removed";
@@ -250,15 +206,19 @@ void VaultManager::submitAndResetEditCache() {
         qDebug() << "edit cache is clean, no action done";
     }
     else {
-        qDebug() << "calling repository->upsertCredentialRow for [group] " << m_currentGroupID
-                 << ", edit cache: [content id]: " << m_currentContentID << ", [org_name]: " << m_editCache.org_name
+        qDebug() << "calling repository->upsertCredentialRow for [group] " << getCurrentGroupID()
+                 << ", edit cache: [content id]: " << getCurrentContentID() << ", [org_name]: " << m_editCache.org_name
                  << ", [username]: " << m_editCache.username << " [password]: " << m_editCache.password
                  << ", [email]: " << m_editCache.email << " [note]: " << m_editCache.note;
         m_repository->upsertCredentialRow(m_currentGroupID, m_editCache);
         m_credentialModel->updateRow(m_editRowIndex, m_editCache);
     }
 
+    if (defaultRowNotSubmitted) {
+        defaultRowNotSubmitted = false;
+    }
     m_editRowIndex = -1;
+    m_currentContentID.clear();
     m_row = Credential{};
     m_editCache = Credential{};
     qDebug() << "[VaultManager]: edit cache reset";

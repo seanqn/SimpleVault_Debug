@@ -9,9 +9,6 @@ void CredentialModel::update(const QList<Credential> &credentials) {
     beginResetModel();
     m_list = credentials;
     endResetModel();
-
-    // debug for mock row (index 0) only
-    qDebug() << "[Credential Model]::update: byteArray: " << credentials[0].content_id << ", string: " << QUuid::fromRfc4122(credentials[0].content_id).toString();
 }
 
 // only appends empty rows

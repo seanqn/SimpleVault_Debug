@@ -2,23 +2,23 @@
 #define VAULTMANAGER_H
 
 #include <QObject>
-#include <QTimer>
 #include <QUuid>
+#include <QDateTime>
 // MOC requires complete types in the header for classes in a Q_PROPERTY so no forward declaration for them
 #include "models/credentialmodel.h"
 #include "models/groupsmodel.h"
 
 class Repository;
 
-// this controller class manages inbound write operations coming from QML to send insert/modify calls to the repository
-// all read operations needed to update QML about the models can be called on from the public QML model properties here
-// all write operations needed to update the models themselves are found as public methods and will call on the repository and models respectively
+// UPDATE: many of these methods will be implemented as service classes after prototyping/debugging the data layer is complete
 class VaultManager : public QObject {
     Q_OBJECT
     Q_PROPERTY(CredentialModel* credentialModel READ credentialModel CONSTANT)
     Q_PROPERTY(GroupsModel* groupsModel READ groupsModel CONSTANT)
-    Q_PROPERTY(int getCurrentGroupID READ getCurrentGroupID NOTIFY groupChanged)
-    Q_PROPERTY(QString getCurrentContentID READ getCurrentContentID NOTIFY credentialRowChanged)
+
+    Q_PROPERTY(bool isGroupSelected READ isGroupSelected NOTIFY groupChanged)
+    Q_PROPERTY(QString getCurrentGroupID READ getCurrentGroupID NOTIFY groupChanged)
+    Q_PROPERTY(QString getCurrentContentID READ getCurrentContentID)
     // Q_PROPERTY(int getCredentialRowCount READ getCredentialRowCount)
 
 public:
@@ -29,24 +29,24 @@ public:
     void initRepository();
     // void updateGroups();
 
+    // group services (GroupsModel)
     Q_INVOKABLE void createGroup(const QString &name);
-    Q_INVOKABLE void selectGroup(int groupID);
-    Q_INVOKABLE void renameGroup(int groupID, const QString &newName);
-    Q_INVOKABLE void removeGroup(int index, int groupID);
-    Q_INVOKABLE int getCurrentGroupID() const { return m_currentGroupID; }
+    Q_INVOKABLE void selectGroup(int index);
+    Q_INVOKABLE void renameGroup(int index, const QString &newName);
+    Q_INVOKABLE void removeGroup(int index);
+    bool isGroupSelected() { return !m_currentGroupID.isNull(); }
+    Q_INVOKABLE QString getCurrentGroupID() const { return QUuid::fromRfc4122(m_currentGroupID).toString(); }
 
-    // adds empty row, if the row columns contain any default values after editing, the row is deconstructed
+    // credential content services (CredentialModel)
     Q_INVOKABLE void addDefaultCredentialRow();
     Q_INVOKABLE void selectCredentialRow(int rowIndex);
     // Q_INVOKABLE void removeCredentialRow();
-    Q_INVOKABLE QString getCurrentContentID() const { return m_currentContentID; }
+    Q_INVOKABLE QString getCurrentContentID() const { return QUuid::fromRfc4122(m_currentContentID).toString(); }
+
+    // edit cache service
     Q_INVOKABLE void startRowEdit(int rowIndex);
     Q_INVOKABLE int getEditRowIndex() const { return m_editRowIndex; }
     Q_INVOKABLE void updateEditCache(const QString &role, const QString &value);
-    Q_INVOKABLE void resetAutoSaveTimer();
-    Q_INVOKABLE void stopAutoSaveTimer();
-    void relayAutoSaveTimeout();
-    // Q_INVOKABLE void commitEditCache();
     Q_INVOKABLE void submitAndResetEditCache();
     Q_INVOKABLE bool editCacheIsEmpty();
     Q_INVOKABLE bool editCacheIsClean();
@@ -55,36 +55,25 @@ signals:
     void repositoryInitializationError();
     void groupAdded();
     void createGroupError();
-    void groupsUpdated(const QString &msg);
-    void groupChanged(int id);
+    void groupChanged(const QString &id);
     void groupRenamed(const QString &name);
     void groupRenameError();
-    void groupRemoved(int id);
-    void groupRemoveError(int id);
-
-    // void createCredentialsError();
-    void credentialsUpdated(const QString &msg);
-    // argument is expected to be default, but matches that of the listening slot
-    void credentialRowAdded(const Credential = Credential());
-    void credentialRowChanged(int id);
-    void credentialRowUpdated(const Credential &credential);
-    // void credentialRowRemoved();
-    // void credentialRowRemoveError();
-
-public slots:
-    void repositoryGroupCacheEmpty() { emit groupsUpdated("Group cache empty"); }
-    void repositoryCredentialCacheEmpty() { emit credentialsUpdated("Credential cache empty"); }
+    void groupRemoved(const QString &id);
+    void groupRemoveError(const QString &id);
 
 private:
     GroupsModel* m_groupsModel;
     CredentialModel* m_credentialModel;
     Repository* m_repository;
-    int m_currentGroupID;
-    QString m_currentContentID;
+
+    QByteArray m_currentGroupID;
+    QByteArray m_currentContentID;
+
+    // edit cache members
+    bool defaultRowNotSubmitted = false;
     Credential m_row; // stores rows that already exist in the model
     Credential m_editCache; // stores currently edited row (at edit row index) and serves as a comparater to determine if the row actually need be submitted
     int m_editRowIndex = -1;
-    QTimer* m_autoSaveTimer = nullptr;
 };
 
 #endif // VAULTMANAGER_H

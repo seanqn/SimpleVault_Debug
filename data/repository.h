@@ -5,6 +5,7 @@
 
 // used only for pushing mock rows, remove QUuid header after debugging
 #include <QUuid>
+#include <QDateTime>
 #include "credentialtypes.h"
 
 class DB_LocalStorage;
@@ -17,33 +18,25 @@ public:
 
     int groupCount() const { return m_groupCache.size(); }
     int credentialRowCount() const { return m_credentialCache.size(); }
-
-    // these getters are redundant since the cache is only reflective of the tables at build and not for live modifications
-    // Group getGroupAt(int index) const { return m_groupCache[index]; }
-    // Credential getCredentialRowAt(int index) const { return m_credentialCache.value(index); }
-
-    void mockCredentialRow();
+    void mockGroup();
+    void mockCredentialRow(QByteArray groupID);
 
     bool initDatabase();
-    bool addGroup(const QString &groupName);
+    bool addGroup(const Group &group);
     void fetchGroups();
-    bool renameGroup(int groupID, const QString &newName);
-    bool removeGroup(int index, int groupID);
+    bool renameGroup(QByteArray groupID, const QString &newName);
+    bool removeGroup(QByteArray groupID);
 
-    void fetchCredentials(int groupID);
-    void upsertCredentialRow(int groupID, Credential &credential);
-    void removeCredentialRow(int groupID, int contentID);
+    void fetchCredentials(QByteArray groupID);
+    void upsertCredentialRow(QByteArray groupID, Credential &credential);
+    void removeCredentialRow(QByteArray groupID, QByteArray contentID);
 
 signals:
     // to models only
-    void groupEntryAdded(Group &group);
-    void groupEntryRemoved(int index);
-    void groupEntryRenamed(int index, const QString &name);
+    void groupEntryAdded(const Group &group);
     void groupCacheUpdated(QList<Group> &cache);
 
     void credentialCacheUpdated(QList<Credential> &cache);
-    // void newCredentialRowAdded(Credential &credential);
-    // void credentialRowUpdated(Credential &credential);
     void credentialRowRemoved(int index);
 
     // to controller only
