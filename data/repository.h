@@ -16,8 +16,6 @@ class Repository : public QObject {
 public:
     explicit Repository(QObject *parent = nullptr, const QString &databaseName="SimpleVault");
 
-    int groupCount() const { return m_groupCache.size(); }
-    int credentialRowCount() const { return m_credentialCache.size(); }
     void mockGroup();
     void mockCredentialRow(QByteArray groupID);
 
@@ -45,8 +43,6 @@ signals:
 
 private:
     DB_LocalStorage *m_db;
-    QList<Credential> m_credentialCache;
-    QList<Group> m_groupCache;
 };
 
 #endif // REPOSITORY_H

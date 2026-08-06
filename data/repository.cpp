@@ -52,7 +52,7 @@ bool Repository::addGroup(const Group &group) {
 // the only method where the cache is implemented is for the purpose of overwriting the group model's internal list
 void Repository::fetchGroups() {
     qDebug() << "[repository]: fetching groups";
-    m_groupCache = m_db->fetchRecords<Group>(
+    QList<Group> groupCache = m_db->fetchRecords<Group>(
         "groups",
         {"id", "name", "created_at"},
         [](auto mapper) {
@@ -64,14 +64,14 @@ void Repository::fetchGroups() {
         }
     );
 
-    if (m_groupCache.isEmpty()) {
-        qDebug() << "[repository]: group cache was empty";
-        return;
-    }
+    emit groupCacheUpdated(groupCache);
 
-    emit groupCacheUpdated(m_groupCache);
-    qDebug() << "[repository]: group cache was updated with the items from database";
-    m_groupCache.clear();
+    if (groupCache.isEmpty()) {
+        qDebug() << "[repository]: group cache was empty";
+    }
+    else {
+        qDebug() << "[repository]: group cache was updated with the items from database";
+    }
 }
 
 bool Repository::renameGroup(QByteArray groupID, const QString &newName) {
@@ -95,7 +95,7 @@ bool Repository::removeGroup(QByteArray groupID) {
 // lambda effectively passes a template type Mapping object to the required paramater
 void Repository::fetchCredentials(QByteArray groupID) {
     qDebug() << "[repository]: fetching credentials";
-    m_credentialCache = m_db->fetchRecords<Credential>(
+    QList<Credential> credentialCache = m_db->fetchRecords<Credential>(
         "vault_content",
         {"content_id", "org_name", "username", "password", "email", "note"},
         [](auto mapper) {
@@ -112,14 +112,14 @@ void Repository::fetchCredentials(QByteArray groupID) {
         {{":groupID", groupID}}
     );
 
-    if (m_credentialCache.isEmpty()) {
-        qDebug() << "[repository]: credential cache was empty";
-        return;
-    }
+    emit credentialCacheUpdated(credentialCache);
 
-    emit credentialCacheUpdated(m_credentialCache);
-    qDebug() << "[repository]: credential cache was updated with items from database";
-    m_credentialCache.clear();
+    if (credentialCache.isEmpty()) {
+        qDebug() << "[repository]: credential cache was empty";
+    }
+    else {
+        qDebug() << "[repository]: credential cache was updated with the items from database";
+    }
 }
 
 void Repository::upsertCredentialRow(QByteArray groupID, Credential &credential) {
