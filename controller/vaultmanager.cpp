@@ -29,7 +29,6 @@ void VaultManager::initRepository() {
     }
     m_repository->mockGroup();
     m_repository->fetchGroups();
-    // updateGroups();
 }
 
 /*
@@ -63,7 +62,7 @@ void VaultManager::selectGroup(int index) {
 
     m_repository->fetchCredentials(gid);
     m_currentGroupID = gid;
-    emit groupChanged(QUuid::fromRfc4122(gid).toString());
+    emit groupChanged(QUuid::fromRfc4122(m_currentGroupID).toString());
 }
 
 void VaultManager::renameGroup(int index, const QString &newName) {
@@ -129,7 +128,7 @@ void VaultManager::addDefaultCredentialRow() {
         return;
     }
 
-    if (m_editRowIndex != -1 && !editCacheIsClean()) {
+    if (m_editRowIndex != -1) {
         submitAndResetEditCache();
     }
 

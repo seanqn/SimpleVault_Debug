@@ -123,6 +123,11 @@ void Repository::fetchCredentials(QByteArray groupID) {
 }
 
 void Repository::upsertCredentialRow(QByteArray groupID, Credential &credential) {
+    if (groupID.isNull()) {
+        qDebug() << "[repository]: upsertCredentialRow: groupID is null";
+        return;
+    }
+
     bool upsertedRowContentID = m_db->upsertVaultRowEntry(groupID, credential);
 
     if (!upsertedRowContentID) {

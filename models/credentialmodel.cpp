@@ -18,22 +18,6 @@ void CredentialModel::appendRow(const Credential &row) {
     endInsertRows();
 }
 
-/*
-basically just the updateRow method but for just added rows that are in edit
-intended to prevent double appends by the controller addDefaultCredentialRow method
-and the repository upsertCredentialRow method, both of which would call this appendRow sequentially
-*/
-// void CredentialModel::syncNewRow(int index, const Credential &row) {
-//     if (m_list[index].content_id.isNull()) {
-//         m_list[index] = row;
-//         QModelIndex modelIndex = createIndex(index, 0);
-//         emit dataChanged(modelIndex, modelIndex, {});
-//         return;
-//     }
-
-//     appendRow(row);
-// }
-
 void CredentialModel::updateRow(int index, const Credential &row) {
     m_list[index] = row;
     qDebug() << "[Credential Model]::updateRow: content_id? " << QUuid::fromRfc4122(row.content_id).toString();
