@@ -59,6 +59,7 @@ void VaultManager::selectGroup(int index) {
         qDebug() << "[Vault Manager]: selectGroup: group list index out of range";
         return;
     }
+    if (m_currentGroupID == gid) return;
 
     m_repository->fetchCredentials(gid);
     m_currentGroupID = gid;

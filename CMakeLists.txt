@@ -26,6 +26,7 @@ target_sources(SimpleVault PRIVATE
     data/repository.h data/repository.cpp
     models/credentialmodel.h models/credentialmodel.cpp
     models/groupsmodel.h models/groupsmodel.cpp
+    services/credentialeditcache.h
 )
 
 # after debug is finished, review and keep only necessary sources
