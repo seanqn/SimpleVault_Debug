@@ -1,5 +1,4 @@
-#ifndef CREDENTIALSMODEL_H
-#define CREDENTIALSMODEL_H
+#pragma once
 
 #include <QAbstractListModel>
 #include "data/credentialtypes.h"
@@ -34,5 +33,3 @@ public slots:
 private:
     QList<Credential> m_list;
 };
-
-#endif // CREDENTIALSMODEL_H

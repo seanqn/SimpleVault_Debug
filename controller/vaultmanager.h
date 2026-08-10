@@ -1,16 +1,14 @@
-#ifndef VAULTMANAGER_H
-#define VAULTMANAGER_H
-
+#pragma once
 #include <QObject>
 #include <QUuid>
 #include <QDateTime>
-// MOC requires complete types in the header for classes in a Q_PROPERTY so no forward declaration for them
+// property objects (CredentialModel, GroupsModel) require full class definitions
 #include "models/credentialmodel.h"
 #include "models/groupsmodel.h"
 
 class Repository;
+class CredentialEditCache;
 
-// UPDATE: many of these methods will be implemented as service classes after prototyping/debugging the data layer is complete
 class VaultManager : public QObject {
     Q_OBJECT
     Q_PROPERTY(CredentialModel* credentialModel READ credentialModel CONSTANT)
@@ -19,10 +17,9 @@ class VaultManager : public QObject {
     Q_PROPERTY(bool isGroupSelected READ isGroupSelected NOTIFY groupChanged)
     Q_PROPERTY(QString getCurrentGroupID READ getCurrentGroupID NOTIFY groupChanged)
     Q_PROPERTY(QString getCurrentContentID READ getCurrentContentID)
-    // Q_PROPERTY(int getCredentialRowCount READ getCredentialRowCount)
 
 public:
-    explicit VaultManager(QObject* parent = nullptr, const QString &databaseName="SimpleVault");
+    explicit VaultManager(Repository& vaultRepository, CredentialEditCache& editCache, QObject* parent = nullptr);
     ~VaultManager();
     GroupsModel* groupsModel() const { return m_groupsModel; }
     CredentialModel* credentialModel() const { return m_credentialModel; }
@@ -45,11 +42,8 @@ public:
 
     // edit cache service
     Q_INVOKABLE void startRowEdit(int rowIndex);
-    Q_INVOKABLE int getEditRowIndex() const { return m_editRowIndex; }
     Q_INVOKABLE void updateEditCache(const QString &role, const QString &value);
-    Q_INVOKABLE void submitAndResetEditCache();
-    Q_INVOKABLE bool editCacheIsEmpty();
-    Q_INVOKABLE bool editCacheIsClean();
+    Q_INVOKABLE void submitEditCache();
 
 signals:
     void repositoryInitializationError();
@@ -64,16 +58,11 @@ signals:
 private:
     GroupsModel* m_groupsModel;
     CredentialModel* m_credentialModel;
-    Repository* m_repository;
+    Repository& m_repo;
+    CredentialEditCache& m_editCache;
 
     QByteArray m_currentGroupID;
     QByteArray m_currentContentID;
 
-    // edit cache members
-    bool defaultRowNotSubmitted = false;
-    Credential m_row; // stores rows that already exist in the model
-    Credential m_editCache; // stores currently edited row (at edit row index) and serves as a comparater to determine if the row actually need be submitted
     int m_editRowIndex = -1;
 };
-
-#endif // VAULTMANAGER_H

@@ -1,5 +1,4 @@
-#ifndef DB_LOCAL_H
-#define DB_LOCAL_H
+#pragma once
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QSqlRecord>
@@ -120,5 +119,3 @@ QList<T> DB_LocalStorage::fetchRecords(
 
     return values;
 }
-
-#endif // DB_LOCAL_H

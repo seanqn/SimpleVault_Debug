@@ -9,8 +9,6 @@ Repository::Repository(QObject *parent, const QString &databaseName)
 
 // emitted repository signals have listening slots in the model classes, and is how the models are being updated
 
-// TODO: encryption/decryption, refactor database methods to reflect repository implementation
-
 bool Repository::initDatabase() {
     return m_db->initDB();
 }
@@ -122,7 +120,7 @@ void Repository::fetchCredentials(QByteArray groupID) {
     }
 }
 
-void Repository::upsertCredentialRow(QByteArray groupID, Credential &credential) {
+void Repository::upsertCredentialRow(QByteArray groupID, const Credential &credential) {
     if (groupID.isNull()) {
         qDebug() << "[repository]: upsertCredentialRow: groupID is null";
         return;

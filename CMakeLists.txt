@@ -8,7 +8,7 @@ set(BUILD_WITH_QT6 ON CACHE BOOL "Force Qt6" FORCE)
 set(Qt5Core_FOUND FALSE CACHE BOOL "" FORCE)
 set(Qt5_FOUND FALSE CACHE BOOL "" FORCE)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Quick Sql)
+find_package(Qt6 REQUIRED COMPONENTS Core Quick Sql Test)
 
 list(APPEND CMAKE_PREFIX_PATH /Users/shonny/Qt/6.9.3/macos/lib/cmake)
 
@@ -26,7 +26,7 @@ target_sources(SimpleVault PRIVATE
     data/repository.h data/repository.cpp
     models/credentialmodel.h models/credentialmodel.cpp
     models/groupsmodel.h models/groupsmodel.cpp
-    services/credentialeditcache.h
+    services/credentialeditcache.h services/credentialeditcache.cpp
 )
 
 # after debug is finished, review and keep only necessary sources
@@ -80,6 +80,7 @@ target_link_libraries(SimpleVault PRIVATE
     Qt6::Core
     Qt6::Quick
     Qt6::Sql
+    Qt6::Test
     qt6keychain
 )
 

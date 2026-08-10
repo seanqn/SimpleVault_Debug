@@ -1,7 +1,6 @@
 // TODO: Finish declarations
 
-#ifndef CRYPTOSERVICER_H
-#define CRYPTOSERVICER_H
+#pragma once
 // include necessary crypto headers
 #include <QObject>
 #include <pwdbased.h>
@@ -20,5 +19,3 @@ signals:
 private:
 
 };
-
-#endif // CRYPTOSERVICER_H

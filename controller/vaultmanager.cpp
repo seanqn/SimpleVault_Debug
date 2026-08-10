@@ -1,34 +1,36 @@
 #include "vaultmanager.h"
 #include "data/repository.h"
+#include "services/credentialeditcache.h"
 
-VaultManager::VaultManager(QObject *parent, const QString &databaseName)
-    : QObject(parent) {
-
-    m_repository = new Repository(this, databaseName);
+VaultManager::VaultManager(Repository& vaultRepository, CredentialEditCache& editCache, QObject *parent)
+    : QObject(parent),
+    m_repo(vaultRepository),
+    m_editCache(editCache)
+{
 
     m_groupsModel = new GroupsModel(this);
-    connect(m_repository, &Repository::groupCacheUpdated, m_groupsModel, &GroupsModel::update);
-    connect(m_repository, &Repository::groupEntryAdded, m_groupsModel, &GroupsModel::append);
+    connect(&m_repo, &Repository::groupCacheUpdated, m_groupsModel, &GroupsModel::update);
+    connect(&m_repo, &Repository::groupEntryAdded, m_groupsModel, &GroupsModel::append);
 
     m_credentialModel = new CredentialModel(this);
-    connect(m_repository, &Repository::credentialCacheUpdated, m_credentialModel, &CredentialModel::update);
+    connect(&m_repo, &Repository::credentialCacheUpdated, m_credentialModel, &CredentialModel::update);
 
     initRepository();
 }
 
 VaultManager::~VaultManager() {
     if (m_editRowIndex != -1) {
-        submitAndResetEditCache();
+        submitEditCache();
     }
 }
 
 void VaultManager::initRepository() {
-    if (!m_repository->initDatabase())  {
+    if (!m_repo.initDatabase())  {
         emit repositoryInitializationError();
         return;
     }
-    m_repository->mockGroup();
-    m_repository->fetchGroups();
+    m_repo.mockGroup();
+    m_repo.fetchGroups();
 }
 
 /*
@@ -41,7 +43,7 @@ void VaultManager::createGroup(const QString &name) {
     newGroup.id = QUuid::createUuidV7().toRfc4122();
     newGroup.name = name;
     newGroup.created_at = QDateTime::currentDateTime();
-    if (m_repository->addGroup(newGroup)) {
+    if (m_repo.addGroup(newGroup)) {
         return;
     }
 
@@ -50,8 +52,8 @@ void VaultManager::createGroup(const QString &name) {
 
 void VaultManager::selectGroup(int index) {
     // ensure that the edit cache is reset before group switching
-    if (m_editRowIndex != -1) {
-        submitAndResetEditCache();
+    if (m_editCache.isEditActive()) {
+        submitEditCache();
     }
 
     QByteArray gid = m_groupsModel->getGroupIDAt(index);
@@ -61,7 +63,7 @@ void VaultManager::selectGroup(int index) {
     }
     if (m_currentGroupID == gid) return;
 
-    m_repository->fetchCredentials(gid);
+    m_repo.fetchCredentials(gid);
     m_currentGroupID = gid;
     emit groupChanged(QUuid::fromRfc4122(m_currentGroupID).toString());
 }
@@ -73,7 +75,7 @@ void VaultManager::renameGroup(int index, const QString &newName) {
         return;
     }
 
-    if (m_repository->renameGroup(gid, newName)) {
+    if (m_repo.renameGroup(gid, newName)) {
         m_groupsModel->rename(index, newName);
         emit groupRenamed(newName);
         return;
@@ -89,7 +91,7 @@ void VaultManager::removeGroup(int index) {
         return;
     }
 
-    if (m_repository->removeGroup(gid)) {
+    if (m_repo.removeGroup(gid)) {
         m_groupsModel->remove(index);
         emit groupRemoved(QUuid::fromRfc4122(gid).toString());
         m_currentGroupID.clear();
@@ -103,34 +105,15 @@ void VaultManager::removeGroup(int index) {
 credential model management methods
 */
 
-// invokable edit cache verification methods
-bool VaultManager::editCacheIsEmpty() {
-    bool isEmpty = m_editCache.org_name.isEmpty() &&
-                   m_editCache.username.isEmpty() &&
-                   m_editCache.password.isEmpty() &&
-                   m_editCache.email.isEmpty() &&
-                   m_editCache.note.isEmpty();
-    return isEmpty;
-}
-
-bool VaultManager::editCacheIsClean() {
-    bool isClean = (m_editCache.org_name == m_row.org_name &&
-                    m_editCache.username == m_row.username &&
-                    m_editCache.password == m_row.password &&
-                    m_editCache.email == m_row.email &&
-                    m_editCache.note == m_row.note);
-    return isClean;
-}
-
 // credential object instantation lives here for now
 void VaultManager::addDefaultCredentialRow() {
     // TODO: allow new rows as long as text for one column in the previous default row has been changed
-    if (defaultRowNotSubmitted) {
+    if (m_editCache.defaultRowExists()) {
         return;
     }
 
-    if (m_editRowIndex != -1) {
-        submitAndResetEditCache();
+    if (m_editCache.isEditActive()) {
+        submitEditCache();
     }
 
     Credential newRow{};
@@ -138,7 +121,6 @@ void VaultManager::addDefaultCredentialRow() {
     // new row key is created here as a 16 byte time-based uuid (must be 16 bytes to read as BLOB in db without conversion)
     newRow.content_id = QUuid::createUuidV7().toRfc4122();
     m_credentialModel->appendRow(newRow);
-    defaultRowNotSubmitted = true;
 }
 
 void VaultManager::selectCredentialRow(int rowIndex) {
@@ -146,80 +128,36 @@ void VaultManager::selectCredentialRow(int rowIndex) {
 }
 
 void VaultManager::startRowEdit(int rowIndex) {
-    if (rowIndex < 0 || rowIndex >= m_credentialModel->rowCount()) {
-        qDebug() << "[VaultManager]: startRowEdit() called with row index: " << rowIndex << " out of range. Model row count: " << m_credentialModel->rowCount() - 1;
-        return;
-    }
+    int rowCount = m_credentialModel->rowCount();
+    if (rowIndex < 0 || rowIndex >= rowCount) return;
+    Credential cred = m_credentialModel->getCredentialAt(rowIndex);
 
-    if (m_editRowIndex == rowIndex) return;
-
-    // this method can be called directly by QML so this guard catches if another row was in edit and did not submit
     if (m_editRowIndex != -1) {
-        qDebug() << "[VaultManager]: startRowEdit() submitting an unsubmitted row previously in edit for row index: " << m_editRowIndex;
-        submitAndResetEditCache();
+        submitEditCache();
     }
 
     m_editRowIndex = rowIndex;
-    // stores the existing row fields before updating
-    m_row = m_credentialModel->getCredentialAt(rowIndex);
-    m_editCache = m_row;
-    m_currentContentID = m_row.content_id;
-    qDebug() << "[VaultManager]: starting edit for model row: " << m_editRowIndex << ", with content id: " << QUuid::fromRfc4122(m_row.content_id).toString();
+    m_editCache.startEdit(cred);
 }
 
 void VaultManager::updateEditCache(const QString &role, const QString &value) {
-    if (m_editRowIndex == -1) return;
-
-    if (role == "org_name") {
-        m_editCache.org_name = value;
-    }
-    else if (role == "username") {
-        m_editCache.username = value;
-    }
-    else if (role == "password") {
-        m_editCache.password = value;
-    }
-    else if (role == "email") {
-        m_editCache.email = value;
-    }
-    else if (role == "note") {
-        m_editCache.note = value;
-    }
-    else {
-        qDebug() << "updateRowCacheField: no " << role << " role found in edit cache or invalid value " << value;
-        return;
-    }
-
-    qDebug() << "[VaultManager]: updatedRowCacheField updated role " << role << " to " << value;
+    m_editCache.updateColumn(role, value);
 }
 
 // called when the edit index has changed or active focus loss from editing row
-void VaultManager::submitAndResetEditCache() {
-    if (m_editRowIndex == -1) return;
-
-    qDebug() << "[VaultManager]: performing submit and reset edit cache";
-    if (editCacheIsEmpty()) {
+void VaultManager::submitEditCache() {
+    if (m_editCache.editCacheIsEmpty()) {
+        qDebug() << "[VaultManager]: edit cache was empty";
         m_credentialModel->removeRow(m_editRowIndex);
-        qDebug() << "all values in row cache are empty after editing, new row has been removed";
-    }
-    else if (editCacheIsClean()) {
-        qDebug() << "edit cache is clean, no action done";
-    }
-    else {
-        qDebug() << "calling repository->upsertCredentialRow for [group] " << getCurrentGroupID()
-                 << ", edit cache: [content id]: " << getCurrentContentID() << ", [org_name]: " << m_editCache.org_name
-                 << ", [username]: " << m_editCache.username << " [password]: " << m_editCache.password
-                 << ", [email]: " << m_editCache.email << " [note]: " << m_editCache.note;
-        m_repository->upsertCredentialRow(m_currentGroupID, m_editCache);
-        m_credentialModel->updateRow(m_editRowIndex, m_editCache);
+        return;
     }
 
-    if (defaultRowNotSubmitted) {
-        defaultRowNotSubmitted = false;
+    if (m_editCache.editCacheIsClean()) {
+        qDebug () << "[Vault Manager]: edit cache was clean";
+        return;
     }
+
+    m_repo.upsertCredentialRow(m_currentGroupID, m_editCache.getCache());
+    m_editCache.reset();
     m_editRowIndex = -1;
-    m_currentContentID.clear();
-    m_row = Credential{};
-    m_editCache = Credential{};
-    qDebug() << "[VaultManager]: edit cache reset";
 }

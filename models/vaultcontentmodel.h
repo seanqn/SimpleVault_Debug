@@ -1,5 +1,4 @@
-#ifndef VAULTCONTENTMODEL_H
-#define VAULTCONTENTMODEL_H
+#pragma once
 #include <QSqlTableModel>
 
 class VaultContentModel : public QSqlTableModel {
@@ -18,5 +17,3 @@ public:
     QHash<int, QByteArray> roleNames() const override;
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
 };
-
-#endif // VAULTCONTENTMODEL_H

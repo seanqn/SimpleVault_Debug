@@ -1,5 +1,4 @@
-#ifndef VAULTSECURITYSERVICER_H
-#define VAULTSECURITYSERVICER_H
+#pragma once
 
 #include <QObject>
 #include <QSettings>
@@ -67,5 +66,3 @@ private:
     // bool _busy = false;
 
 };
-
-#endif // VAULTSECURITYSERVICER_H

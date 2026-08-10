@@ -1,5 +1,4 @@
-#ifndef REPOSITORY_H
-#define REPOSITORY_H
+#pragma once
 
 #include <QObject>
 
@@ -26,7 +25,7 @@ public:
     bool removeGroup(QByteArray groupID);
 
     void fetchCredentials(QByteArray groupID);
-    void upsertCredentialRow(QByteArray groupID, Credential &credential);
+    void upsertCredentialRow(QByteArray groupID, const Credential &credential);
     void removeCredentialRow(QByteArray groupID, QByteArray contentID);
 
 signals:
@@ -44,5 +43,3 @@ signals:
 private:
     DB_LocalStorage *m_db;
 };
-
-#endif // REPOSITORY_H

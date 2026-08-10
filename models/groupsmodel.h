@@ -1,5 +1,4 @@
-#ifndef GROUPSMODEL_H
-#define GROUPSMODEL_H
+#pragma once
 
 #include <QAbstractListModel>
 #include "data/credentialtypes.h"
@@ -29,5 +28,3 @@ private:
     // the actual structure of this model essentially just serves as the destination for the repository group cache
     QList<Group> m_list;
 };
-
-#endif // GROUPSMODEL_H
