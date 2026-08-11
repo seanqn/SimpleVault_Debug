@@ -1,10 +1,9 @@
 // TODO: Finish declarations
 
 #pragma once
-// include necessary crypto headers
+
 #include <QObject>
-#include <pwdbased.h>
-#include <sha.h>
+#include <sodium.h>
 
 class CryptoServicer : public QObject {
     Q_OBJECT

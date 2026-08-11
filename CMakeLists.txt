@@ -52,6 +52,7 @@ qt_add_qml_module(SimpleVault
     SOURCES
         services/vaultsecurityservicer.h services/vaultsecurityservicer.cpp
         controller/vaultmanager.h controller/vaultmanager.cpp
+        RESOURCES 3rdparty/libsodium/CMakeLists.txt
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
@@ -81,43 +82,12 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(qtkeychain)
 #
 
-# LIBSODIUM
-# set source
-set(LIBSODIUM_INSTALL_DIR ${CMAKE_BINARY_DIR}/libsodium-install)
-FetchContent_Declare(
-    libsodium_src
-    URL https://download.libsodium.org/libsodium/releases/libsodium-1.0.22.tar.gz
-    URL_HASH SHA256=adbdd8f16149e81ac6078a03aca6fc03b592b89ef7b5ed83841c086191be3349
-    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
-)
-FetchContent_MakeAvailable(libsodium_src)
-
-# build external project (library itself does not build with CMAKE)
-include(ExternalProject)
-ExternalProject_Add(
-    libsodium_ext
-    SOURCE_DIR ${libsodium_src_SOURCE_DIR}
-    PREFIX ${CMAKE_BINARY_DIR}/libsodium
-    CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=${LIBSODIUM_INSTALL_DIR} --disable-shared --enable-static
-    BUILD_COMMAND ${CMAKE_MAKE_PROGRAM}
-    INSTALL_COMMAND ${CMAKE_MAKE_PROGRAM} install
-    TEST_COMMAND ""
-)
-
-# import targets with existing source
-add_library(libsodium STATIC IMPORTED GLOBAL)
-set_target_properties(libsodium PROPERTIES
-    IMPORTED_LOCATION ${LIBSODIUM_INSTALL_DIR}/lib/libsodium.a
-    # must use the include directories to quiet the compiler
-    INTERFACE_SYSTEM_INCLUDE_DIRECTORIES ${LIBSODIUM_INSTALL_DIR}/include>
-)
-add_dependencies(libsodium libsodium_ext)
-#
-
 target_include_directories(SimpleVault PRIVATE
     ${qtkeychain_BINARY_DIR}
     ${qtkeychain_SOURCE_DIR}
 )
+
+add_subdirectory(3rdparty/libsodium)
 
 target_link_libraries(SimpleVault PRIVATE
     Qt6::Core
