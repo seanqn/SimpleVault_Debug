@@ -4,7 +4,7 @@
 file(GLOB_RECURSE SODIUM_SOURCES "src/libsodium/*.c")
 add_library(libsodium STATIC ${SODIUM_SOURCES})
 target_include_directories(libsodium PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/libsodium-1.0.22/src/libsodium/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/libsodium/include>
 )
 
 # define internal flags to avoid autoconf header reliance
