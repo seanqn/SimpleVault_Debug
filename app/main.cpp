@@ -22,12 +22,12 @@ int main(int argc, char *argv[])
 
     Repository mainRepository(nullptr, runInTest ? ":memory:" : "SimpleVault");
     CredentialEditCache editCache;
-    VaultManager vaultManager(mainRepository, editCache);
+    VaultManager *vaultManager = new VaultManager(mainRepository, editCache, &app);
 
-    // qmlRegisterSingletonInstance("VaultManager", 1, 0, "VaultManager", vaultManager);
+    qmlRegisterSingletonInstance("VaultManager", 1, 0, "VaultManager", vaultManager);
 
     // authentication servicer
-    VaultSecurityServicer *vaultAuthenticator = new VaultSecurityServicer();
+    VaultSecurityServicer *vaultAuthenticator = new VaultSecurityServicer(&app);
     qmlRegisterSingletonInstance("VaultSecurityServicer", 1, 0, "Authenticator", vaultAuthenticator);
 
     QQmlApplicationEngine engine;
@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
         Qt::QueuedConnection
     );
 
-    // engine.rootContext()->setContextProperty("vaultManager", vaultManager);
+    engine.rootContext()->setContextProperty("vaultManager", vaultManager);
     if (testCase == 1) {
         engine.load(QUrl(QStringLiteral("qrc:/qt/qml/SimpleVault/tests/groups_vaultcontent_tests.qml")));
     }

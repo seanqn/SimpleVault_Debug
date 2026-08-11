@@ -1,12 +1,18 @@
-#include <QtTest>
+#include <QtTest/QtTest>
 #include "vaultmanager.h"
+#include "data/repository.h"
 
-class TestController : public QObject {
+struct MockDB {
+public:
+
+};
+
+class Test_VaultManager : public QObject {
     Q_OBJECT
 
 private slots:
-    void initCase();
-    void cleanupCase();
+    void initTestCase();
+    void cleanupTestCase();
     void init();
     void cleanup();
 
@@ -15,27 +21,36 @@ private slots:
     void test_submitAndResetEditCache();
     void test_checkEditCacheEmpty();
     void test_checkEditCacheClean();
+
+private:
+    Repository* test_Repo;
+    VaultManager* test_Manager;
+    CredentialEditCache* test_Cache;
 };
 
-void TestController::initCase() {
+void TestController::initTestCase() {
 
 }
 
-void TestController::cleanupCase() {
+void TestController::cleanupTestCase() {
 
 }
 
 void TestController::init() {
-
+    test_Repo = new Repository(nullptr, ":memory:");
+    test_Cache = new CredentialEditCache(nullptr);
+    test_Manager = new VaultManager(test_Repo, test_Cache, nullptr);
 }
 
 void TestController::cleanup() {
-
+    delete test_Manager;
+    delete test_Repo;
+    delete test_Cache;
 }
 
 void TestController::test_startRowEdit(int index) {
 
 }
 
-QTEST_MAIN(TestController)
+QTEST_MAIN(Test_VaultManager)
 #include "tests_controller.moc"

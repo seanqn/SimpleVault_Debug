@@ -9,6 +9,7 @@ set(Qt5Core_FOUND FALSE CACHE BOOL "" FORCE)
 set(Qt5_FOUND FALSE CACHE BOOL "" FORCE)
 
 find_package(Qt6 REQUIRED COMPONENTS Core Quick Sql Test)
+# enable_testing()
 
 list(APPEND CMAKE_PREFIX_PATH /Users/shonny/Qt/6.9.3/macos/lib/cmake)
 
@@ -17,6 +18,13 @@ qt_standard_project_setup(REQUIRES 6.8)
 add_executable(SimpleVault
     app/main.cpp
 )
+
+# FIX: compiler is not recognizing includes in some (all headers involved with this test target) when attempting to add test
+# add_executable(Test_VaultManager
+#     controller/tests_controller.cpp
+#     controller/vaultmanager.cpp
+#     services/credentialeditcache.cpp
+# )
 
 # QML_IMPORT_PATH("/Users/shonny/Qt/6.9.3/macos/qml")
 
@@ -83,6 +91,8 @@ target_link_libraries(SimpleVault PRIVATE
     Qt6::Test
     qt6keychain
 )
+
+# add_test(NAME Test_VaultManager COMMAND Test_VaultManager)
 
 include(GNUInstallDirs)
 
