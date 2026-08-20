@@ -1,6 +1,8 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.30)
 
 project(SimpleVault VERSION 1.0 LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(Qt6_DIR "/Users/shonny/Qt/6.9.3/macos/lib/cmake/Qt6")
@@ -8,8 +10,12 @@ set(BUILD_WITH_QT6 ON CACHE BOOL "Force Qt6" FORCE)
 set(Qt5Core_FOUND FALSE CACHE BOOL "" FORCE)
 set(Qt5_FOUND FALSE CACHE BOOL "" FORCE)
 
+# automation features required for Q_OBJECT functionality in test classes
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTORCC ON)
+
 find_package(Qt6 REQUIRED COMPONENTS Core Quick Sql Test)
-# enable_testing()
 
 list(APPEND CMAKE_PREFIX_PATH /Users/shonny/Qt/6.9.3/macos/lib/cmake)
 
@@ -19,7 +25,6 @@ add_executable(SimpleVault
     app/main.cpp
 )
 
-# FIX: compiler is not recognizing includes in some (all headers involved with this test target) when attempting to add test
 # add_executable(Test_VaultManager
 #     controller/tests_controller.cpp
 #     controller/vaultmanager.cpp
@@ -35,6 +40,7 @@ target_sources(SimpleVault PRIVATE
     models/credentialmodel.h models/credentialmodel.cpp
     models/groupsmodel.h models/groupsmodel.cpp
     services/credentialeditcache.h services/credentialeditcache.cpp
+    services/crypto/cryptoservicer.h services/crypto/cryptoservicer.cpp
 )
 
 # after debug is finished, review and keep only necessary sources
@@ -52,7 +58,6 @@ qt_add_qml_module(SimpleVault
     SOURCES
         services/vaultsecurityservicer.h services/vaultsecurityservicer.cpp
         controller/vaultmanager.h controller/vaultmanager.cpp
-        RESOURCES 3rdparty/libsodium/CMakeLists.txt
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
@@ -82,12 +87,28 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(qtkeychain)
 #
 
+# libsodium
+find_path(SODIUM_INCLUDE_DIR
+    NAMES sodium.h
+    PATHS /usr/local/opt/libsodium/include /usr/local/include
+)
+
+find_library(SODIUM_LIB_STATIC
+    NAMES libsodium.a sodium
+    PATHS /usr/local/opt/libsodium/lib /usr/local/lib
+)
+
+add_library(sodium::sodium STATIC IMPORTED GLOBAL)
+set_target_properties(sodium::sodium PROPERTIES
+    IMPORTED_LOCATION "${SODIUM_LIB_STATIC}"
+    INTERFACE_INCLUDE_DIRECTORIES "${SODIUM_INCLUDE_DIR}"
+)
+#
+
 target_include_directories(SimpleVault PRIVATE
     ${qtkeychain_BINARY_DIR}
     ${qtkeychain_SOURCE_DIR}
 )
-
-add_subdirectory(3rdparty/libsodium)
 
 target_link_libraries(SimpleVault PRIVATE
     Qt6::Core
@@ -95,8 +116,23 @@ target_link_libraries(SimpleVault PRIVATE
     Qt6::Sql
     Qt6::Test
     qt6keychain
-    libsodium
+    sodium::sodium
 )
+#
+
+enable_testing()
+add_executable(Test_CryptoServicer
+    services/crypto/tests_cryptoservicer.cpp
+
+    # addt
+    services/crypto/cryptoservicer.h services/crypto/cryptoservicer.cpp
+)
+target_link_libraries(Test_CryptoServicer PRIVATE
+    Qt6::Core
+    Qt6::Test
+    sodium::sodium
+)
+add_test(NAME Test_CryptoServicer COMMAND Test_CryptoServicer --verbose)
 
 # add_test(NAME Test_VaultManager COMMAND Test_VaultManager)
 
