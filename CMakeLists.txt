@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.30)
 
-project(SimpleVault VERSION 1.0 LANGUAGES CXX)
+project(SimpleVault VERSION 1.0 LANGUAGES CXX OBJCXX)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -33,6 +33,9 @@ add_executable(SimpleVault
 
 # QML_IMPORT_PATH("/Users/shonny/Qt/6.9.3/macos/qml")
 
+set_source_files_properties(macos/statusitem_bridge.mm PROPERTIES
+    COMPILE_FLAGS "-fobjc-arc"
+)
 target_sources(SimpleVault PRIVATE
     data/credentialtypes.h
     data/repositories/db_local.h data/repositories/db_local.cpp
@@ -41,6 +44,7 @@ target_sources(SimpleVault PRIVATE
     models/groupsmodel.h models/groupsmodel.cpp
     services/credentialeditcache.h services/credentialeditcache.cpp
     services/crypto/cryptoservicer.h services/crypto/cryptoservicer.cpp
+    macos/nsstatus_bridge.mm
 )
 
 # after debug is finished, review and keep only necessary sources
@@ -58,6 +62,7 @@ qt_add_qml_module(SimpleVault
     SOURCES
         services/vaultsecurityservicer.h services/vaultsecurityservicer.cpp
         controller/vaultmanager.h controller/vaultmanager.cpp
+        SOURCES macos/nsstatus_bridge.h
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
@@ -116,6 +121,8 @@ target_link_libraries(SimpleVault PRIVATE
     Qt6::Sql
     Qt6::Test
     qt6keychain
+    "-framework AppKit"
+    "-framework Cocoa"
     sodium::sodium
 )
 #

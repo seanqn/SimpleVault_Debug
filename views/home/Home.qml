@@ -4,58 +4,45 @@ import QtQuick.Layouts
 import "./components"
 // import DB_LocalStorage
 
-Item {
-    anchors.fill: parent
-    width: 600
+Window {
+    id: statusBarHome
+    width: 320
     height: 400
+    flags: Qt.Popup | Qt.FramelessWindowHint
+    visible: false
+    color: "transparent"
 
-    // for testing with QML preview
-    Layout.minimumHeight: 400
-    Layout.minimumWidth: 400
-    Layout.preferredHeight: 400
-    Layout.preferredWidth: 600
-    //
+    Connections {
+        target: appStatusBar
 
-
-
-    // Home displays user's vaults
-    // Allow add/removal of new, customizable vaults
-
-    // FIX: vault content overflows into pane if the window size is too small (set window restriction or modify content layout behavior)
-
-    SplitView {
-        anchors.fill: parent
-        orientation: Qt.Horizontal
-
-        handle: Rectangle {
-            implicitWidth: 3
-            color: "#888"
-        }
-
-        HomePane {
-            SplitView.minimumWidth: 100
-            SplitView.preferredWidth: 200
-            SplitView.maximumWidth: 300
-        }
-
-        // TODO: create a dedicated vault content view that will replace this rectangle
-
-        Rectangle {
-            id: vaultContent
-            SplitView.fillWidth: true
-
-            Text {
-                anchors.centerIn: parent
-                text: "content"
+        function onStatusItemClicked(anchorPoint, statusRect, screen) {
+            if (statusBarHome.visible) {
+                statusBarHome.visible = false;
+            }
+            else {
+                if (screen) {
+                    statusBarHome.screen = screen;
+                }
+                statusBarHome.x = anchorPoint.x - (statusBarHome.width / 2);
+                statusBarHome.y = anchorPoint.y + 4;
+                statusBarHome.visible = true;
+                statusBarHome.raise();
+                statusBarHome.requestActivate();
             }
         }
     }
 
-    Rectangle {
-        id: homeUtilityFooter
-        width: parent.width
-        anchors.bottom: parent.bottom
-        height: 25
+    onActiveChanged: {
+        if (!active) {
+            visible = false;
+        }
+    }
 
+    Rectangle {
+        anchors.fill: parent
+        radius: 12
+        color: "#2B2B2B"
+        border.color: "#3D3D3D"
+        border.width: 1
     }
 }

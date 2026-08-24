@@ -6,6 +6,7 @@
 #include "controller/vaultmanager.h"
 #include "data/repository.h"
 #include "services/credentialeditcache.h"
+#include "macos/nsstatus_bridge.h"
 // includes and sub-controller dependency creation will be consolidated into a primary controller later on
 
 int main(int argc, char *argv[])
@@ -13,12 +14,17 @@ int main(int argc, char *argv[])
     QCoreApplication::setOrganizationName("github/seanqn");
     QCoreApplication::setOrganizationDomain("com.seanqn.simplevault");
     QCoreApplication::setApplicationName("SimpleVault");
+
+    // prevents termination upon menu-bar window closing
+    QGuiApplication::setQuitOnLastWindowClosed(false);
+
     QGuiApplication app(argc, argv);
-    // QApplication::setOrganizationName("github/seanqn");
+    QQmlApplicationEngine engine;
+    AppStatusBar *statusBar = new AppStatusBar(&app);
+    engine.rootContext()->setContextProperty("appStatusBar", statusBar);
 
     bool runInTest = true;
-    // testCases: [0] default, [1] qml, [2] backend
-    int testCase = 1;
+    int testCase = 2;
 
     Repository mainRepository(nullptr, runInTest ? ":memory:" : "SimpleVault");
     CredentialEditCache editCache;
@@ -30,7 +36,6 @@ int main(int argc, char *argv[])
     VaultSecurityServicer *vaultAuthenticator = new VaultSecurityServicer(&app);
     qmlRegisterSingletonInstance("VaultSecurityServicer", 1, 0, "Authenticator", vaultAuthenticator);
 
-    QQmlApplicationEngine engine;
     QObject::connect(
         &engine,
         &QQmlApplicationEngine::objectCreationFailed,
@@ -39,13 +44,19 @@ int main(int argc, char *argv[])
         Qt::QueuedConnection
     );
 
-    engine.rootContext()->setContextProperty("vaultManager", vaultManager);
     if (testCase == 1) {
         engine.load(QUrl(QStringLiteral("qrc:/qt/qml/SimpleVault/tests/groups_vaultcontent_tests.qml")));
     }
-    else {
+    else if (testCase == 2) {
+        engine.load(QUrl(QStringLiteral("qrc:/qt/qml/SimpleVault/views/home/Home.qml")));
+    }
+    else if (testCase == 3) {
         engine.load(QUrl(QStringLiteral("qrc:/qt/qml/SimpleVault/views/Main.qml")));
     }
+    else {
+        return 0;
+    }
 
+    // engine.rootContext()->setContextProperty("vaultManager", vaultManager);
     return app.exec();
 }
